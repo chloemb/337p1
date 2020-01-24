@@ -15,12 +15,12 @@ def find_next_verb(pairs):
 	# print("finding next verb from", pairs)
 	counter = 0
 	while counter < len(pairs):
-		if pairs[counter][1].startswith(('VB', 'VBZ', 'VBN', 'VBG', 'VBD')):
+		if pairs[counter][1].startswith('VB'):
 			# print(0)
 			# print("found a verb", pairs[counter][0])
-			return pairs[counter][0]
+			return pairs[counter][0], counter
 		counter += 1
-	return ""
+	return "", counter
 
 
 def full_nnp(pairs):
@@ -30,6 +30,19 @@ def full_nnp(pairs):
 		name += " " + pairs[counter][0]
 		counter += 1
 	return name, counter
+
+
+def find_next_award(pairs):
+	counter = 0
+	award = ""
+	while counter < len(pairs):
+		if pairs[counter][0] == 'best' or pairs[counter][0] == 'Best':
+			while counter < len(pairs) and pairs[counter][1].startswith('N'):
+				award += " " + pairs[counter][0]
+				counter += 1
+			return award
+		counter += 1
+	return award
 
 
 ignore_as_first_char = ('@', '#')
@@ -60,10 +73,14 @@ for line in tweets:
 			this_phrase, noun_len = full_nnp(clean_parsed[counter: length])
 			counter += noun_len
 			# print("found proper noun", this_phrase)
-			next_verb = find_next_verb(clean_parsed[counter: length])
+			next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
 			if next_verb != "":
 				this_phrase += " " + next_verb
-				print(this_phrase)
+				new_counter = counter + verb_ind
+				award = find_next_award(clean_parsed[new_counter: length])
+				if award != "":
+					this_phrase += " " + award
+					print(this_phrase)
 		counter += 1
 
 
@@ -73,5 +90,5 @@ for line in tweets:
 	# print(names)
 
 
-	if counter == 10:
-		sys.exit()
+	# if counter == 50:
+	# 	sys.exit()
