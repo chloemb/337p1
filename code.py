@@ -35,6 +35,8 @@ def full_nnp(pairs):
 ignore_as_first_char = ('@', '#')
 
 propers=[]
+
+awardnames=set()
 counter = 0
 for line in tweets:
 	#parsed = nltk.tokenize(line['text'])
@@ -58,6 +60,8 @@ for line in tweets:
 	while counter < length:
 		if clean_parsed[counter][1] == 'NNP':
 			this_phrase, noun_len = full_nnp(clean_parsed[counter: length])
+			if "best" in this_phrase or "Best" in this_phrase:
+				awardnames.add(this_phrase)
 			counter += noun_len
 			# print("found proper noun", this_phrase)
 			next_verb = find_next_verb(clean_parsed[counter: length])
@@ -66,12 +70,9 @@ for line in tweets:
 				print(this_phrase)
 		counter += 1
 
+print(awardnames)
 
 	# groups = groupby(clean_parsed, key=lambda x: x[1])  # Group by tags
 	# names = [[w for w, _ in words] for tag, words in groups if tag == "NNP"]
 	# names = [" ".join(name) for name in names if len(name) >= 2]
 	# print(names)
-
-
-	if counter == 10:
-		sys.exit()
