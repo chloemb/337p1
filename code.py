@@ -26,7 +26,7 @@ def find_next_verb(pairs):
 def full_nnp(pairs):
 	counter = 0
 	name = ""
-	while counter < len(pairs) and pairs[counter][1] == 'NNP':
+	while (counter < len(pairs) and pairs[counter][1] == 'NNP' and "," not in pairs[counter][0] ):
 		name += " " + pairs[counter][0]
 		counter += 1
 	return name, counter
@@ -37,7 +37,7 @@ ignore_as_first_char = ('@', '#')
 propers=[]
 
 awardnames=set()
-counter = 0
+counter2 = 0
 for line in tweets:
 	#parsed = nltk.tokenize(line['text'])
 	#print(parsed)
@@ -45,7 +45,7 @@ for line in tweets:
 	# first, run part-of-speech tagger
 	parsed = nltk.tag.pos_tag(line['text'].split())
 
-	counter += 1
+	counter2 += 1
 
 	# next, remove words that start with anything in ignore_as_first_char
 	clean_parsed = []
@@ -70,7 +70,11 @@ for line in tweets:
 				print(this_phrase)
 		counter += 1
 
-print(awardnames)
+	if counter2>=1000:
+		
+		print(awardnames)
+		sys.exit()
+
 
 	# groups = groupby(clean_parsed, key=lambda x: x[1])  # Group by tags
 	# names = [[w for w, _ in words] for tag, words in groups if tag == "NNP"]
