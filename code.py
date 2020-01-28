@@ -1,4 +1,4 @@
-import nltk, string as str
+import nltk, string as str, re
 import json
 import urllib.request
 from bs4 import BeautifulSoup
@@ -8,6 +8,9 @@ from itertools import groupby
 # nltk.download('averaged_perceptron_tagger')
 
 print("NEW RUN \n\n\n")
+
+OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
+OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
 
 tweets=[]
 for line in open('gg2020.json','r', encoding='utf8'):
@@ -46,12 +49,16 @@ def find_next_award(pairs):
         counter += 1
     return award
 
+def find_next_award_hardcoded(pairs):
+    return 0
+
 
 def actor_name(name):
     #found urllib.request and BeautifulSoup packages from the repo cited below
     #citation: https://github.com/rkm660/GoldenGlobes/blob/master/gg.py
 
     #take the url for a search by a particular name
+    name = re.sub(r'[^\w\s]', '', name)
     url = "https://www.imdb.com/find?s=nm&q="+name.replace(" ", "+")+"&ref_=nv_sr_sm"
     red = urllib.request.urlopen(url).read()
     soup = BeautifulSoup(red, features="lxml")
@@ -59,57 +66,64 @@ def actor_name(name):
     actor = ""
     if len(existence) > 1:
         actor = existence[0].find_all("a")[1].string
-    else:
-        print("Not an Actor")
-    print(actor)
+    # else:
+    #     print("Not an Actor")
+    # print(actor)
+    return actor
 
 
-actor_name("jared leto")
+# actor_name("jared leto")
 
-ignore_as_first_char = ('@', '#')
+def main_loop():
+    ignore_as_first_char = ('@', '#')
+    counter1 = 0
+    for line in tweets:
+        # first, run part-of-speech tagger
+        parsed = nltk.tag.pos_tag(line['text'].split())
 
-propers=[]
-counter = 0
-for line in tweets:
-    #parsed = nltk.tokenize(line['text'])
-    #print(parsed)
+        counter1 += 1
 
-    # first, run part-of-speech tagger
-    parsed = nltk.tag.pos_tag(line['text'].split())
+        # next, remove words that start with anything in ignore_as_first_char
+        clean_parsed = []
 
-    counter += 1
+        for pair in parsed:
+            if not pair[0].startswith(ignore_as_first_char):
+                clean_parsed.append(pair)
 
-    # next, remove words that start with anything in ignore_as_first_char
-    clean_parsed = []
+        # now, match proper nouns to verbs
+        counter = 0
+        length = len(clean_parsed)
+        while counter < length:
+            # find every group of words labeled NNP
+            if clean_parsed[counter][1] == 'NNP':
+                this_phrase, noun_len = full_nnp(clean_parsed[counter: length])
+                counter += noun_len
+                # print("proper noun found:", this_phrase)
 
-    for pair in parsed:
-        if not pair[0].startswith(ignore_as_first_char):
-            clean_parsed.append(pair)
+                # check if it's a real actor's name
+                this_actor = actor_name(this_phrase)
+                if this_actor != "":
+                    # print("actor found:", this_actor)
 
-    # now, match proper nouns to verbs
-    counter = 0
-    length = len(clean_parsed)
-    while counter < length:
-        if clean_parsed[counter][1] == 'NNP':
-            this_phrase, noun_len = full_nnp(clean_parsed[counter: length])
-            counter += noun_len
-            # print("found proper noun", this_phrase)
-            next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
-            if next_verb != "":
-                this_phrase += " " + next_verb
-                new_counter = counter + verb_ind
-                award = find_next_award(clean_parsed[new_counter: length])
-                if award != "":
-                    this_phrase += " " + award
-                    print(this_phrase)
-        counter += 1
+                    # find the next verb for each NNP group
+                    next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
+                    if next_verb != "":
+                        this_phrase += " " + next_verb
+                        new_counter = counter + verb_ind
 
+                        # find the next group of nouns starting with 'best'
+                        award = find_next_award(clean_parsed[new_counter: length])
+                        if award != "":
+                            this_phrase += " " + award
+                            print(this_phrase)
+            counter += 1
 
-    # groups = groupby(clean_parsed, key=lambda x: x[1])  # Group by tags
-    # names = [[w for w, _ in words] for tag, words in groups if tag == "NNP"]
-    # names = [" ".join(name) for name in names if len(name) >= 2]
-    # print(names)
+        # groups = groupby(clean_parsed, key=lambda x: x[1])  # Group by tags
+        # names = [[w for w, _ in words] for tag, words in groups if tag == "NNP"]
+        # names = [" ".join(name) for name in names if len(name) >= 2]
+        # print(names)
 
+        if counter1 == 50:
+            sys.exit()
 
-    # if counter == 50:
-    # 	sys.exit()
+# main_loop()
