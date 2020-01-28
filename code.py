@@ -1,11 +1,12 @@
-import nltk, string as str, re
-import json
-import urllib.request
+import nltk, string as str, re, json, urllib.request, sys, time, unidecode
 from bs4 import BeautifulSoup
-import sys
-from itertools import groupby
 
+import gg_api
+
+# WE MAY NEED TO UNCOMMENT THIS?
 # nltk.download('averaged_perceptron_tagger')
+
+start_time = time.time()
 
 print("NEW RUN \n\n\n")
 
@@ -54,12 +55,17 @@ def find_next_award_hardcoded(pairs):
 
 
 def actor_name(name):
-    #found urllib.request and BeautifulSoup packages from the repo cited below
-    #citation: https://github.com/rkm660/GoldenGlobes/blob/master/gg.py
+    # found urllib.request and BeautifulSoup packages from the repo cited below
+    # citation: https://github.com/rkm660/GoldenGlobes/blob/master/gg.py
 
-    #take the url for a search by a particular name
+    # take the url for a search by a particular name
+
+    # remove punctuation, accents, replace spaces with +
     name = re.sub(r'[^\w\s]', '', name)
+    name = unidecode.unidecode(name)
     url = "https://www.imdb.com/find?s=nm&q="+name.replace(" ", "+")+"&ref_=nv_sr_sm"
+
+    # search
     red = urllib.request.urlopen(url).read()
     soup = BeautifulSoup(red, features="lxml")
     existence = soup.find_all("tr", {"class": "findResult odd"})
@@ -96,34 +102,30 @@ def main_loop():
         while counter < length:
             # find every group of words labeled NNP
             if clean_parsed[counter][1] == 'NNP':
-                this_phrase, noun_len = full_nnp(clean_parsed[counter: length])
+                this_NNP_phrase = ""
+                potential_actor, noun_len = full_nnp(clean_parsed[counter: length])
                 counter += noun_len
                 # print("proper noun found:", this_phrase)
+                # find the next verb for each NNP group
+                next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
+                if next_verb != "":
+                    this_NNP_phrase += potential_actor + " " + next_verb
+                    new_counter = counter + verb_ind
 
-                # check if it's a real actor's name
-                this_actor = actor_name(this_phrase)
-                if this_actor != "":
-                    # print("actor found:", this_actor)
-
-                    # find the next verb for each NNP group
-                    next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
-                    if next_verb != "":
-                        this_phrase += " " + next_verb
-                        new_counter = counter + verb_ind
-
-                        # find the next group of nouns starting with 'best'
-                        award = find_next_award(clean_parsed[new_counter: length])
-                        if award != "":
-                            this_phrase += " " + award
-                            print(this_phrase)
+                    # find the next group of nouns starting with 'best'
+                    award = find_next_award(clean_parsed[new_counter: length])
+                    if award != "":
+                        # check if it's a real actor's name
+                        this_actor = actor_name(potential_actor)
+                        if this_actor != "":
+                            # print(this_phrase, "returns as actor:", this_actor)
+                            this_NNP_phrase += " " + award
+                            print(this_NNP_phrase)
             counter += 1
 
-        # groups = groupby(clean_parsed, key=lambda x: x[1])  # Group by tags
-        # names = [[w for w, _ in words] for tag, words in groups if tag == "NNP"]
-        # names = [" ".join(name) for name in names if len(name) >= 2]
-        # print(names)
-
-        if counter1 == 50:
+        if counter1 == 20000:
+            end_time = time.time()
+            print("Runtime:", counter1, "tweets in", end_time - start_time, "seconds")
             sys.exit()
 
-# main_loop()
+main_loop()

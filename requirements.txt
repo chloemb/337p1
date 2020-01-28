@@ -2,4 +2,4 @@ bs4
 lxml
 numpy==1.18.1
 nltk==3.4.5
-
+unidecode
