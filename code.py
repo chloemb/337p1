@@ -63,7 +63,7 @@ def actor_name(name):
     # remove punctuation, accents, replace spaces with +
     name = re.sub(r'[^\w\s]', '', name)
     name = unidecode.unidecode(name)
-    url = "https://www.imdb.com/find?s=nm&q="+name.replace(" ", "+")+"&ref_=nv_sr_sm"
+    url = "https://www.imdb.com/find?q="+name.replace(" ", "+")+"&s=nm&exact=true&ref_=fn_nm_ex"
 
     # search
     red = urllib.request.urlopen(url).read()
