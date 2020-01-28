@@ -1,7 +1,5 @@
 import nltk, string as str, re
 import json
-import urllib.request
-from bs4 import BeautifulSoup
 import sys
 from itertools import groupby
 
