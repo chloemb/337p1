@@ -73,7 +73,7 @@ def actor_name(name):
 
 
 def industry_name(name):
-    #searches throught the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
+    #searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
     name = name.lower()
     with open("name.basics.tsv") as basics:
         for line in basics:
@@ -85,6 +85,7 @@ def industry_name(name):
 industry_name("brad pitt")
 
 def media_name(title):
+    # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
     title = title.lower()
     with open("title.akas.tsv") as basics:
         for line in basics:
