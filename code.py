@@ -72,7 +72,29 @@ def actor_name(name):
     return actor
 
 
-# actor_name("jared leto")
+def industry_name(name):
+    #searches throught the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
+    name = name.lower()
+    with open("name.basics.tsv") as basics:
+        for line in basics:
+            if name in line.lower():
+                print(name)
+                return True
+        return False
+
+industry_name("brad pitt")
+
+def media_name(title):
+    title = title.lower()
+    with open("title.akas.tsv") as basics:
+        for line in basics:
+            if title in line.lower():
+                print(title)
+                return True
+        return False
+
+media_name("looper")
+media_name("friends")
 
 def main_loop():
     ignore_as_first_char = ('@', '#')
