@@ -89,6 +89,32 @@ def actor_name(name):
     searched_pairs.append((name,actor))
     return actor
 
+def industry_name(name):
+    #searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
+    name = name.lower()
+    with open("name.basics.tsv") as basics:
+        for line in basics:
+            if name in line.lower():
+                return name
+        return "Not A Relevant Person"
+
+print(industry_name("nick jonas"))
+print(industry_name("priyanka chopra"))
+print(industry_name("brad pitt"))
+print(industry_name("sdkahglkg"))
+
+def media_name(title):
+    # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
+    title = title.lower()
+    with open("title.akas.tsv") as basics:
+        for line in basics:
+            if title in line.lower():
+                return title
+        return "Not A Movie"
+print(media_name("djskghalfg"))
+print(media_name("parasite"))
+print(media_name("fantastic four"))
+
 masterlist=[]
 def update_master(award,person,verb):
     #print("updating")
