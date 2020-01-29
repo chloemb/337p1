@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="701c9681-4ecd-49b9-bf38-8c5701c5bb97" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/gg_api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/code.py" beforeDir="false" afterPath="$PROJECT_DIR$/code.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -32,52 +30,36 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/requirements.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="60">
-              <caret line="4" column="9" lean-forward="true" selection-start-line="4" selection-start-column="9" selection-end-line="4" selection-end-column="9" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/README.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
-            <state split_layout="SPLIT">
-              <first_editor relative-caret-position="30">
-                <caret line="2" selection-start-line="2" selection-end-line="2" />
-              </first_editor>
-              <second_editor />
+            <state relative-caret-position="15">
+              <caret line="3" column="11" selection-start-line="3" selection-start-column="11" selection-end-line="3" selection-end-column="11" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/gg2020.json">
-          <provider selected="true" editor-type-id="LargeFileEditor">
-            <state relative-caret-position="214">
-              <caret line="4134" column="146" selection-start-line="4134" selection-start-column="146" selection-end-line="4134" selection-end-column="146" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/code.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="174">
-              <caret line="101" column="31" lean-forward="true" selection-start-line="101" selection-start-column="31" selection-end-line="101" selection-end-column="31" />
+            <state relative-caret-position="32">
+              <caret line="64" lean-forward="true" selection-start-line="64" selection-end-line="64" />
               <folding>
-                <element signature="e#0#30#0" expanded="true" />
+                <element signature="e#0#74#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/gg_api.py">
+        <entry file="file://$PROJECT_DIR$/../hw8-neural-networks-JackWarshaw/venv/lib/python3.7/site-packages/bs4/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+            <state relative-caret-position="233">
+              <caret line="286" selection-start-line="286" selection-end-line="286" />
             </state>
           </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/gg2020.json">
+          <provider selected="true" editor-type-id="LargeFileEditor" />
         </entry>
       </file>
     </leaf>
@@ -93,7 +75,6 @@
     <findStrings>
       <find>colburn</find>
       <find>sam mendes</find>
-      <find>best</find>
       <find>brad pitt</find>
       <find>scooped</find>
       <find>best animated</find>
@@ -105,6 +86,18 @@
       <find>danielle</find>
       <find>scarlett johans</find>
       <find>dundee</find>
+      <find>print</find>
+      <find>Kate</find>
+      <find>new_counter</find>
+      <find>kristin</find>
+      <find>Best Foreign-L</find>
+      <find>quentin tar</find>
+      <find>best</find>
+      <find>deme</find>
+      <find>berry</find>
+      <find>emily</find>
+      <find>kinney</find>
+      <find>cecil</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -148,6 +141,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -159,7 +153,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -219,17 +212,20 @@
       <workItem from="1579825130686" duration="527000" />
       <workItem from="1579899977537" duration="11000" />
       <workItem from="1579899990221" duration="6909000" />
+      <workItem from="1580251916001" duration="49000" />
+      <workItem from="1580252002100" duration="8000" />
+      <workItem from="1580252100716" duration="95000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="12640000" />
+    <option name="totallyTimeSpent" value="18139000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="210" y="23" width="1230" height="866" extended-state="0" />
+    <frame x="39" y="23" width="1230" height="831" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.27104378" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2828784" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -258,11 +254,12 @@
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/code" />
-    <entry file="file://$PROJECT_DIR$/../hw8-neural-networks-JackWarshaw/venv/lib/python3.7/site-packages/bs4/__init__.py" />
-    <entry file="file://$PROJECT_DIR$/gg_api.py">
+    <entry file="file://$USER_HOME$/Downloads/code.py" />
+    <entry file="file://$PROJECT_DIR$/uniquenameinthispc.py" />
+    <entry file="file://$PROJECT_DIR$/requirements.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+        <state relative-caret-position="15">
+          <caret line="3" column="11" selection-start-line="3" selection-start-column="11" selection-end-line="3" selection-end-column="11" />
         </state>
       </provider>
     </entry>
@@ -276,27 +273,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/requirements.txt">
+    <entry file="file://$PROJECT_DIR$/gg2020.json">
+      <provider selected="true" editor-type-id="LargeFileEditor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gg_api.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="4" column="9" lean-forward="true" selection-start-line="4" selection-start-column="9" selection-end-line="4" selection-end-column="9" />
+        <state relative-caret-position="405">
+          <caret line="27" column="43" lean-forward="true" selection-start-line="27" selection-start-column="43" selection-end-line="27" selection-end-column="43" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../hw8-neural-networks-JackWarshaw/venv/lib/python3.7/site-packages/bs4/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="233">
+          <caret line="286" selection-start-line="286" selection-end-line="286" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/code.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="174">
-          <caret line="101" column="31" lean-forward="true" selection-start-line="101" selection-start-column="31" selection-end-line="101" selection-end-column="31" />
+        <state relative-caret-position="32">
+          <caret line="64" lean-forward="true" selection-start-line="64" selection-end-line="64" />
           <folding>
-            <element signature="e#0#30#0" expanded="true" />
+            <element signature="e#0#74#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/gg2020.json">
-      <provider selected="true" editor-type-id="LargeFileEditor">
-        <state relative-caret-position="214">
-          <caret line="4134" column="146" selection-start-line="4134" selection-start-column="146" selection-end-line="4134" selection-end-column="146" />
         </state>
       </provider>
     </entry>
