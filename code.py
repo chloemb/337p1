@@ -131,6 +131,7 @@ def wrapup():
         for winner,count in winners:
             if count > most[1]:
                 most=(winner,count)
+            nominees.add(winner)
         winners = most[0]
 
     for award,presenters,nominees,winner in awardlist:
