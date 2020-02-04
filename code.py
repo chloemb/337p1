@@ -116,8 +116,13 @@ print(media_name("parasite"))
 print(media_name("fantastic four"))
 
 masterlist=[]
-def update_master(award,person,verb):
+def update_master(award,person,verb, dres=False,qual=False):
     #print("updating")
+    if dres and qual:
+        if qual = 1:
+            dresslist[0].append(person)
+        if qual = 2:
+            dresslist[1].append(person)
     for listaward,presenters,actors in masterlist:
         if award == listaward:
             if "present" in verb or "host" in verb or "announ" in verb:
@@ -129,6 +134,7 @@ def update_master(award,person,verb):
                 return
             actors.add(person)
             return
+
     if "present" in verb or "host" in verb or "announ" in verb:
         masterlist.append((award,[(person,1)],set()))
     else:
@@ -136,6 +142,7 @@ def update_master(award,person,verb):
         actorset.add(person)
         masterlist.append((award,[],actorset))
 
+dresslist=[[],[]]
 def main_loop():
     print("start")
     ignore_as_first_char = ('@', '#')
@@ -157,9 +164,18 @@ def main_loop():
         # now, match proper nouns to verbs
         counter = 0
         length = len(clean_parsed)
+        dressed, dressqual = False, False
+        if "dress" in line or "wear" in line or "looks" in line:
+            dressed = True
+        if dressed: 
+            if "awful" in line or "bad" in line or "ugl" in line or "horrible" in line:
+                dressqual=2
+            if "good" in line or "handsome" in line or "styl" in line or "sex" in line or "beaut" in line or "gorg" in line:
+                dressqual=1
         while counter < length:
             #print(counter1)
             # find every group of words labeled NNP
+
             if clean_parsed[counter][1] == 'NNP':
                 potential_actor, noun_len = full_nnp(clean_parsed[counter: length])
                 counter += noun_len
@@ -182,7 +198,7 @@ def main_loop():
                             break
                         if this_actor != "":
                             # print(this_phrase, "returns as actor:", this_actor)
-                            update_master(award,this_actor,next_verb)
+                            update_master(award,this_actor,next_verb,dressed,dressqual)
             counter += 1
 
         if counter1 == 138000:
