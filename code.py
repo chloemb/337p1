@@ -32,9 +32,11 @@ def find_next_verb(pairs):
 
 def full_nnp(pairs):
     counter = 0
+    #print("here?", len(pairs),pairs[counter][1])
     name = ""
     while counter < len(pairs) and pairs[counter][1] == 'NNP':
         name += " " + depunctuate(pairs[counter][0])
+        #print(name)
         counter += 1
     #print(name)
     return name, counter
@@ -45,14 +47,94 @@ def depunctuate(stringy):
 def find_next_award(pairs):
     counter = 0
     award = ""
+    #print(counter, pairs)
     while counter < len(pairs):
         if pairs[counter][0] == 'best' or pairs[counter][0] == 'Best':
+            #print("runs")
+            award="Best"
+            counter+=1
+            #print("yo",counter, len(pairs), pairs[counter][1])
             while counter < len(pairs) and pairs[counter][1].startswith('N'):
+                #print("follows:")
                 award += " " + pairs[counter][0]
+                #print(award)
                 counter += 1
             return depunctuate(award)
         counter += 1
     return depunctuate(award)
+
+def wrapup():
+    print("wrapping up", time.time()-start_time)
+    cutoff_symbols =[",",".","!","?","http","www"]
+    for award, presenters, nominees,winners in masterlist:
+        for symbol in cutoff_symbols:
+            if symbol in award:
+                award = award.split(symbol)[0]
+            for presenter in presenters:
+                if symbol in award:
+                    presenter = presenter.split(symbol)[0]
+            for nominee in nominees:
+                if symbol in nominee:
+                    nominee = nominee.split(symbol)[0]
+            for winner,count in winners:
+                if symbol in winner:
+                    newname = winner.split(symbol)[0]
+                    if newname == winner:
+                        break
+                    for otherwinner,othercount in winners:
+                        if (newname in otherwinner or otherwinner in newname):
+                            othercount+=count
+                            try:
+                                winners.remove((winner,count))
+                            except:
+                                pass
+                    winner=newname
+
+    awardlist=[]
+    for award, presenters, nominees, winners in masterlist:
+        append=True
+        for premio, huespedes, nominados, ganadores in awardlist:
+            if award.lower() in premio.lower():
+                append=False
+                huespedes=huespedes.union(presenters)
+                nominados = nominados.union(nominees)
+                for winner,count in winners:
+                    ad=True
+                    for ganador,conteo in ganadores:
+                        if ganador in winner or winner in ganador:
+                            ad = False
+                            conteo+=count
+                    if ad:
+                        ganadores.append((winner,count))
+                break
+            elif premio.lower() in award.lower():
+                append=False
+                premio = award
+                huespedes=huespedes.union(presenters)
+                nominados = nominados.union(nominees)
+                for winner,count in winners:
+                    ad=True
+                    for ganador,conteo in ganadores:
+                        if ganador in winner or winner in ganador:
+                            ad = False
+                            conteo+=count
+                    if ad:
+                        ganadores.append((winner,count))
+                break
+        if append: 
+            awardlist.append((award,presenters,nominees,winners))
+    for award,presenters,nominees,winners in awardlist:
+        if winners==[]:
+            winners = "unknown"
+            continue
+        most=(winners[0])
+        for winner,count in winners:
+            if count > most[1]:
+                most=(winner,count)
+        winners = most[0]
+
+    for award,presenters,nominees,winner in awardlist:
+        print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
 
 def find_next_award_hardcoded(pairs):
     return 0
@@ -68,7 +150,6 @@ def actor_name(name):
     # remove punctuation, accents, replace spaces with +
     name = re.sub(r'[^\w\s]', '', name)
     name = unidecode.unidecode(name)
-
     #Add movies later
     for trial, match in searched_pairs:
         if trial == name:
@@ -89,92 +170,82 @@ def actor_name(name):
     searched_pairs.append((name,actor))
     return actor
 
-def industry_name(name):
-    #searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
-    name = name.lower()
-    with open("name.basics.tsv") as basics:
-        for line in basics:
-            if name in line.lower():
-                return name
-        return "Not A Relevant Person"
-
-print(industry_name("nick jonas"))
-print(industry_name("priyanka chopra"))
-print(industry_name("brad pitt"))
-print(industry_name("sdkahglkg"))
-
-def media_name(title):
-    # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
-    title = title.lower()
-    with open("title.akas.tsv") as basics:
-        for line in basics:
-            if title in line.lower():
-                return title
-        return "Not A Movie"
-print(media_name("djskghalfg"))
-print(media_name("parasite"))
-print(media_name("fantastic four"))
-
 masterlist=[]
 def update_master(award,person,verb):
-    #print("updating")
-    for listaward,presenters,actors in masterlist:
+    #print("updating",award,person,verb)
+    for listaward,presenters,actors,winners in masterlist:
         if award == listaward:
             if "present" in verb or "host" in verb or "announ" in verb:
-                for presenter,instances in presenters:
-                    if presenter ==person:
-                        instances+=1
+                presenters.add(person)
+                return
+            if "won" in verb or "win" in verb or "accept" in verb or "receive" in verb or "award" in verb:
+                for winner, count in winners:
+                    if winner in person or person in winner:
+                        count+=1
                         return
-                presenters.append((person,1))
+                winners.append((person,1))
                 return
             actors.add(person)
             return
     if "present" in verb or "host" in verb or "announ" in verb:
-        masterlist.append((award,[(person,1)],set()))
+        newset=set()
+        newset.add(person)
+        masterlist.append((award,newset,set(),[]))
+    if "won" in verb or "win" in verb or "accept" in verb or "receive" in verb or "award" in verb:
+        masterlist.append((award,set(),set(),[(person,1)]))
     else:
         actorset=set()
         actorset.add(person)
-        masterlist.append((award,[],actorset))
+        masterlist.append((award,set(),actorset,[]))
 
 def main_loop():
     print("start")
     ignore_as_first_char = ('@', '#')
-    counter1 = 0
+    counter = 0
     for line in tweets:
-        new_trio = []
-        # first, run part-of-speech tagger
+        counter = 0
+        #print(counter)
+        cont=True
+
+
+        if "best" in line['text'].lower():
+            cont = False
+        if cont:
+            continue
+        clean_parsed=[]
         parsed = nltk.tag.pos_tag(line['text'].split())
-
-        counter1 += 1
-
-        # next, remove words that start with anything in ignore_as_first_char
-        clean_parsed = []
-
+        
         for pair in parsed:
             if not pair[0].startswith(ignore_as_first_char):
                 clean_parsed.append(pair)
 
         # now, match proper nouns to verbs
-        counter = 0
         length = len(clean_parsed)
         while counter < length:
             #print(counter1)
             # find every group of words labeled NNP
+            
+
             if clean_parsed[counter][1] == 'NNP':
                 potential_actor, noun_len = full_nnp(clean_parsed[counter: length])
+                #print(counter, noun_len)
                 counter += noun_len
+
                 # print("proper noun found:", this_phrase)
                 # find the next verb for each NNP group
                 next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
                 if next_verb != "":
+                    next_verb=next_verb.lower()
                     if "present" not in next_verb and "win" not in next_verb and "announ" not in next_verb and "won" not in next_verb and "host" not in next_verb and "accept" not in next_verb:
                         counter+= 1
                         break
+                    #print("here?")
                     new_counter = counter + verb_ind
 
                     # find the next group of nouns starting with 'best'
                     award = find_next_award(clean_parsed[new_counter: length])
                     if award != "":
+                        #print(award)
                         # check if it's a real actor's name
                         try:
                             this_actor = actor_name(potential_actor)
@@ -183,14 +254,17 @@ def main_loop():
                         if this_actor != "":
                             # print(this_phrase, "returns as actor:", this_actor)
                             update_master(award,this_actor,next_verb)
-            counter += 1
+            else:
+                counter+=1
 
-        if counter1 == 138000:
-            end_time = time.time()
+            
 
 
-            print("Runtime:", counter1, "tweets in", end_time - start_time, "seconds")
-            print(masterlist)
-            sys.exit()
+      
+
+    wrapup()
+    end_time = time.time()
+    print("Runtime:", end_time - start_time, "seconds")
+    sys.exit()
 
 main_loop()
