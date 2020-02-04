@@ -1,2 +1,5 @@
-
+*.vc
 *.tsv
+*.DS_Store
+*.id
+*.idea
