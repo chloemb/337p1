@@ -1,22 +1,26 @@
-import nltk, string as str, re, json, urllib.request, sys, time, unidecode
+import nltk, string as str, re, urllib.request, sys, time, unidecode
 from bs4 import BeautifulSoup
-
-import gg_api
-
-# WE MAY NEED TO UNCOMMENT THIS?
-# nltk.download('averaged_perceptron_tagger')
-
-start_time = time.time()
-#print("wtf")
-print("NEW RUN \n\n\n")
+import read_json
+from nltk.metrics import edit_distance
 
 OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
 OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
 
-tweets=[]
-searched_pairs=[]
-for line in open('gg2020.json','r', encoding='utf8'):
-    tweets.append(json.loads(line))
+
+# WE MAY NEED TO UNCOMMENT THIS?
+# nltk.download('averaged_perceptron_tagger')
+
+# specify which year we are running
+year = '2013'
+
+start_time = time.time()
+# print("\n\n\nNEW RUN")
+
+# tweets = []
+searched_pairs = []
+# for line in open('gg2020.json','r', encoding='utf8'):
+#     tweets.append(json.loads(line))
+
 
 def find_next_verb(pairs):
     # print("finding next verb from", pairs)
@@ -32,17 +36,19 @@ def find_next_verb(pairs):
 
 def full_nnp(pairs):
     counter = 0
-    #print("here?", len(pairs),pairs[counter][1])
+    # print("here?", len(pairs),pairs[counter][1])
     name = ""
     while counter < len(pairs) and pairs[counter][1] == 'NNP':
         name += " " + depunctuate(pairs[counter][0])
-        #print(name)
+        # print(name)
         counter += 1
-    #print(name)
+    # print(name)
     return name, counter
+
 
 def depunctuate(stringy):
     return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0]
+
 
 def find_next_award(pairs):
     counter = 0
@@ -63,10 +69,19 @@ def find_next_award(pairs):
         counter += 1
     return depunctuate(award)
 
+
+prominent_synonyms = [("tv","television","series"),("motion", "picture","film","movie")]
+
+
 def wrapup():
     print("wrapping up", time.time()-start_time)
     cutoff_symbols =[",",".","!","?","http","www"]
-    for award, presenters, nominees,winners in masterlist:
+
+    nominees_dict = {}
+    winners_dict = {}
+    presenters_dict = {}
+
+    for award, presenters, nominees, winners in masterlist:
         for symbol in cutoff_symbols:
             if symbol in award:
                 award = award.split(symbol)[0]
@@ -76,19 +91,19 @@ def wrapup():
             for nominee in nominees:
                 if symbol in nominee:
                     nominee = nominee.split(symbol)[0]
-            for winner,count in winners:
+            for winner, count in winners:
                 if symbol in winner:
                     newname = winner.split(symbol)[0]
                     if newname == winner:
                         break
-                    for otherwinner,othercount in winners:
-                        if (newname in otherwinner or otherwinner in newname):
-                            othercount+=count
+                    for otherwinner, othercount in winners:
+                        if newname in otherwinner or otherwinner in newname:
+                            othercount += count
                             try:
                                 winners.remove((winner,count))
                             except:
                                 pass
-                    winner=newname
+                    winner = newname
 
     awardlist=[]
     for award, presenters, nominees, winners in masterlist:
@@ -96,10 +111,10 @@ def wrapup():
         for premio, huespedes, nominados, ganadores in awardlist:
             if award.lower() in premio.lower():
                 append=False
-                huespedes=huespedes.union(presenters)
+                huespedes = huespedes.union(presenters)
                 nominados = nominados.union(nominees)
                 for winner,count in winners:
-                    ad=True
+                    ad = True
                     for ganador,conteo in ganadores:
                         if ganador in winner or winner in ganador:
                             ad = False
@@ -108,41 +123,57 @@ def wrapup():
                         ganadores.append((winner,count))
                 break
             elif premio.lower() in award.lower():
-                append=False
+                append = False
                 premio = award
-                huespedes=huespedes.union(presenters)
+                huespedes = huespedes.union(presenters)
                 nominados = nominados.union(nominees)
                 for winner,count in winners:
                     ad=True
                     for ganador,conteo in ganadores:
                         if ganador in winner or winner in ganador:
                             ad = False
-                            conteo+=count
+                            conteo += count
                     if ad:
                         ganadores.append((winner,count))
                 break
         if append: 
-            awardlist.append((award,presenters,nominees,winners))
-    for award,presenters,nominees,winners in awardlist:
-        if winners==[]:
+            awardlist.append((award, presenters, nominees, winners))
+
+    for award, presenters, nominees, winners in awardlist:
+        if winners == []:
             winners = "unknown"
             continue
-        most=(winners[0])
-        for winner,count in winners:
+        most = (winners[0])
+        for winner, count in winners:
             if count > most[1]:
-                most=(winner,count)
-            nominees.add(winner)
+                most =(winner,count)
+            nominees. add(winner)
         winners = most[0]
 
-    for award,presenters,nominees,winner in awardlist:
+    for award, presenters, nominees, winner in awardlist:
+        nominees_dict[award] = nominees
+        winners_dict[award] = winner
+        presenters_dict[award] = presenters
         print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
+        return nominees_dict, winners_dict, presenters_dict
+
 
 def find_next_award_hardcoded(pairs):
-    return 0
+    # find closest official award name
+    raw_award = find_next_award(pairs)
+    found = False
+    for real_award in OFFICIAL_AWARDS_1315:
+        potential_award = combine_award(raw_award, real_award)
+        if potential_award:
+            raw_award = potential_award
+            found = True
+            break
+    if not found:
+        return False
+    return raw_award
 
 
 def actor_name(name):
-    #print("This ran somehow???")
     # found urllib.request and BeautifulSoup packages from the repo cited below
     # citation: https://github.com/rkm660/GoldenGlobes/blob/master/gg.py
 
@@ -151,7 +182,7 @@ def actor_name(name):
     # remove punctuation, accents, replace spaces with +
     name = re.sub(r'[^\w\s]', '', name)
     name = unidecode.unidecode(name)
-    #Add movies later
+    # Add movies later
     for trial, match in searched_pairs:
         if trial == name:
             return match
@@ -171,14 +202,16 @@ def actor_name(name):
     searched_pairs.append((name,actor))
     return actor
 
+
 def industry_name(name):
-    #searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
+    # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
     name = name.lower()
     with open("name.basics.tsv") as basics:
         for line in basics:
             if name in line.lower():
                 return name
         return "Not A Relevant Person"
+
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
@@ -188,49 +221,95 @@ def media_name(title):
             if title in line.lower():
                 return title
         return "Not A Movie"
-masterlist=[]
-def update_master(award,person,verb):
-    #print("updating",award,person,verb)
-    for listaward,presenters,actors,winners in masterlist:
+
+
+def combine_award(name1, name2):
+    big, smol = "", ""
+    if name1 == name2:
+        return name1
+    if len(name1) >= len(name2):
+        big = name1
+        smol = name2
+    else:
+        big = name2
+        smol = name1
+
+    smolwords = smol.split()
+    bigwords = big.split()
+    for smolword in smolwords:
+        matched = False
+        for bigword in bigwords:
+            if bigword in prominent_synonyms[0] and smolword in prominent_synonyms[0] or bigword in prominent_synonyms[1] and smolword in prominent_synonyms[1]:
+                matched = True
+                break
+            if edit_distance(smolword, bigword, transpositions=True) < 3:
+                matched = True
+                break
+        if not matched:
+            return False
+    return big
+
+
+# print("testing combine_award")
+# for real_award in gg_api.OFFICIAL_AWARDS_1315:
+#     # print(real_award)
+#     if combine_award("best actor", real_award):
+#         print(combine_award("best actor", real_award))
+# sys.exit()
+
+
+masterlist = []
+
+
+def update_master(award, person, verb):
+    # print("updating",award,person,verb)
+
+    for listaward, presenters, actors, winners in masterlist:
         if award == listaward:
-            if "present" in verb or "host" in verb or "announ" in verb:
+            if any(word in verb for word in ("present", "host", "announ")):
                 presenters.add(person)
                 return
-            if "won" in verb or "win" in verb or "accept" in verb or "receive" in verb or "award" in verb:
+            if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
                 for winner, count in winners:
                     if winner in person or person in winner:
-                        count+=1
+                        count += 1
                         return
-                winners.append((person,1))
+                winners.append((person, 1))
                 return
             actors.add(person)
             return
-    if "present" in verb or "host" in verb or "announ" in verb:
-        newset=set()
+    if any(word in verb for word in ("present", "host", "announ")):
+        newset = set()
         newset.add(person)
         masterlist.append((award,newset,set(),[]))
-    if "won" in verb or "win" in verb or "accept" in verb or "receive" in verb or "award" in verb:
-        masterlist.append((award,set(),set(),[(person,1)]))
+    if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
+        masterlist.append((award, set(), set(), [(person, 1)]))
     else:
-        actorset=set()
+        actorset = set()
         actorset.add(person)
-        masterlist.append((award,set(),actorset,[]))
+        masterlist.append((award, set(), actorset, []))
+
 
 def main_loop():
     print("start")
+    tweets = read_json.read_json(year)
     ignore_as_first_char = ('@', '#')
-    counter = 0
+    tweet_counter = 0
+
     for line in tweets:
-        counter = 0
-        #print(counter)
-        cont=True
+        if tweet_counter == 20000:
+            # print("ending")
+            nominees, winners, presenters = wrapup()
+            end_time = time.time()
+            print("Runtime:", end_time - start_time, "seconds")
+            print(nominees, winners, presenters)
+            return nominees, winners, presenters
 
-
-        if "best" in line['text'].lower():
-            cont = False
-        if cont:
+        if "best" not in line['text'].lower():
+            tweet_counter += 1
             continue
-        clean_parsed=[]
+
+        clean_parsed = []
         parsed = nltk.tag.pos_tag(line['text'].split())
         
         for pair in parsed:
@@ -239,50 +318,42 @@ def main_loop():
 
         # now, match proper nouns to verbs
         length = len(clean_parsed)
+        counter = 0
         while counter < length:
-            #print(counter1)
             # find every group of words labeled NNP
-            
 
             if clean_parsed[counter][1] == 'NNP':
                 potential_actor, noun_len = full_nnp(clean_parsed[counter: length])
-                #print(counter, noun_len)
                 counter += noun_len
 
-                # print("proper noun found:", this_phrase)
                 # find the next verb for each NNP group
                 next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
                 if next_verb != "":
-                    next_verb=next_verb.lower()
-                    if "present" not in next_verb and "win" not in next_verb and "announ" not in next_verb and "won" not in next_verb and "host" not in next_verb and "accept" not in next_verb:
-                        counter+= 1
+                    next_verb = next_verb.lower()
+                    if not any(word in next_verb for word in ("present", "win", "announ", "won", "host", "accept")):
+                        counter += 1
                         break
-                    #print("here?")
                     new_counter = counter + verb_ind
 
                     # find the next group of nouns starting with 'best'
-                    award = find_next_award(clean_parsed[new_counter: length])
-                    if award != "":
-                        #print(award)
+                    award = find_next_award_hardcoded(clean_parsed[new_counter: length])
+                    if award:
                         # check if it's a real actor's name
                         try:
                             this_actor = actor_name(potential_actor)
                         except:
                             break
                         if this_actor != "":
-                            # print(this_phrase, "returns as actor:", this_actor)
-                            update_master(award,this_actor,next_verb)
+                            # print("updating master")
+                            update_master(award, this_actor, next_verb)
             else:
-                counter+=1
+                counter += 1
 
-            
+        tweet_counter += 1
+
+    # wrapup()
+    # end_time = time.time()
+    # print("Runtime:", end_time - start_time, "seconds")
 
 
-      
-
-    wrapup()
-    end_time = time.time()
-    print("Runtime:", end_time - start_time, "seconds")
-    sys.exit()
-
-main_loop()
+# main_loop()
