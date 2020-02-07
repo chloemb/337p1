@@ -1,4 +1,10 @@
-import nltk, string as str, re, urllib.request, sys, time, unidecode
+import nltk
+import string as str
+import re
+import urllib.request
+import sys
+import time
+import unidecode
 from bs4 import BeautifulSoup
 import read_json
 from nltk.metrics import edit_distance
@@ -10,16 +16,10 @@ OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - mu
 # WE MAY NEED TO UNCOMMENT THIS?
 # nltk.download('averaged_perceptron_tagger')
 
-# specify which year we are running
-year = '2013'
-
 start_time = time.time()
 # print("\n\n\nNEW RUN")
 
-# tweets = []
 searched_pairs = []
-# for line in open('gg2020.json','r', encoding='utf8'):
-#     tweets.append(json.loads(line))
 
 
 def find_next_verb(pairs):
@@ -68,94 +68,6 @@ def find_next_award(pairs):
             return depunctuate(award)
         counter += 1
     return depunctuate(award)
-
-
-prominent_synonyms = [("tv","television","series"),("motion", "picture","film","movie")]
-
-
-def wrapup():
-    print("wrapping up", time.time()-start_time)
-    cutoff_symbols =[",",".","!","?","http","www"]
-
-    nominees_dict = {}
-    winners_dict = {}
-    presenters_dict = {}
-
-    for award, presenters, nominees, winners in masterlist:
-        for symbol in cutoff_symbols:
-            if symbol in award:
-                award = award.split(symbol)[0]
-            for presenter in presenters:
-                if symbol in award:
-                    presenter = presenter.split(symbol)[0]
-            for nominee in nominees:
-                if symbol in nominee:
-                    nominee = nominee.split(symbol)[0]
-            for winner, count in winners:
-                if symbol in winner:
-                    newname = winner.split(symbol)[0]
-                    if newname == winner:
-                        break
-                    for otherwinner, othercount in winners:
-                        if newname in otherwinner or otherwinner in newname:
-                            othercount += count
-                            try:
-                                winners.remove((winner,count))
-                            except:
-                                pass
-                    winner = newname
-
-    awardlist=[]
-    for award, presenters, nominees, winners in masterlist:
-        append=True
-        for premio, huespedes, nominados, ganadores in awardlist:
-            if award.lower() in premio.lower():
-                append=False
-                huespedes = huespedes.union(presenters)
-                nominados = nominados.union(nominees)
-                for winner,count in winners:
-                    ad = True
-                    for ganador,conteo in ganadores:
-                        if ganador in winner or winner in ganador:
-                            ad = False
-                            conteo+=count
-                    if ad:
-                        ganadores.append((winner,count))
-                break
-            elif premio.lower() in award.lower():
-                append = False
-                premio = award
-                huespedes = huespedes.union(presenters)
-                nominados = nominados.union(nominees)
-                for winner,count in winners:
-                    ad=True
-                    for ganador,conteo in ganadores:
-                        if ganador in winner or winner in ganador:
-                            ad = False
-                            conteo += count
-                    if ad:
-                        ganadores.append((winner,count))
-                break
-        if append: 
-            awardlist.append((award, presenters, nominees, winners))
-
-    for award, presenters, nominees, winners in awardlist:
-        if winners == []:
-            winners = "unknown"
-            continue
-        most = (winners[0])
-        for winner, count in winners:
-            if count > most[1]:
-                most =(winner,count)
-            nominees. add(winner)
-        winners = most[0]
-
-    for award, presenters, nominees, winner in awardlist:
-        nominees_dict[award] = nominees
-        winners_dict[award] = winner
-        presenters_dict[award] = presenters
-        print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
-        return nominees_dict, winners_dict, presenters_dict
 
 
 def find_next_award_hardcoded(pairs):
@@ -224,7 +136,6 @@ def media_name(title):
 
 
 def combine_award(name1, name2):
-    big, smol = "", ""
     if name1 == name2:
         return name1
     if len(name1) >= len(name2):
@@ -233,6 +144,8 @@ def combine_award(name1, name2):
     else:
         big = name2
         smol = name1
+
+    prominent_synonyms = [("tv", "television", "series"), ("motion", "picture", "film", "movie")]
 
     smolwords = smol.split()
     bigwords = big.split()
@@ -248,14 +161,6 @@ def combine_award(name1, name2):
         if not matched:
             return False
     return big
-
-
-# print("testing combine_award")
-# for real_award in gg_api.OFFICIAL_AWARDS_1315:
-#     # print(real_award)
-#     if combine_award("best actor", real_award):
-#         print(combine_award("best actor", real_award))
-# sys.exit()
 
 
 masterlist = []
@@ -290,19 +195,20 @@ def update_master(award, person, verb):
         masterlist.append((award, set(), actorset, []))
 
 
-def main_loop():
+def main_loop(year):
     print("start")
     tweets = read_json.read_json(year)
     ignore_as_first_char = ('@', '#')
     tweet_counter = 0
 
     for line in tweets:
+        # print(line)
         if tweet_counter == 20000:
             # print("ending")
             nominees, winners, presenters = wrapup()
             end_time = time.time()
+            # print(nominees, winners, presenters)
             print("Runtime:", end_time - start_time, "seconds")
-            print(nominees, winners, presenters)
             return nominees, winners, presenters
 
         if "best" not in line['text'].lower():
@@ -355,5 +261,92 @@ def main_loop():
     # end_time = time.time()
     # print("Runtime:", end_time - start_time, "seconds")
 
+
+def wrapup():
+    print("wrapping up", time.time()-start_time)
+    # print("MASTER LIST IS", masterlist)
+    cutoff_symbols =[",",".","!","?","http","www"]
+
+    nominees_dict = {}
+    winners_dict = {}
+    presenters_dict = {}
+
+    for award, presenters, nominees, winners in masterlist:
+        for symbol in cutoff_symbols:
+            if symbol in award:
+                award = award.split(symbol)[0]
+            for presenter in presenters:
+                if symbol in award:
+                    presenter = presenter.split(symbol)[0]
+            for nominee in nominees:
+                if symbol in nominee:
+                    nominee = nominee.split(symbol)[0]
+            for winner, count in winners:
+                if symbol in winner:
+                    newname = winner.split(symbol)[0]
+                    if newname == winner:
+                        break
+                    for otherwinner, othercount in winners:
+                        if newname in otherwinner or otherwinner in newname:
+                            othercount += count
+                            try:
+                                winners.remove((winner,count))
+                            except:
+                                pass
+                    winner = newname
+
+    awardlist=[]
+    for award, presenters, nominees, winners in masterlist:
+        append = True
+        for premio, huespedes, nominados, ganadores in awardlist:
+            if award.lower() in premio.lower():
+                append = False
+                huespedes = huespedes.union(presenters)
+                nominados = nominados.union(nominees)
+                for winner, count in winners:
+                    ad = True
+                    for ganador, conteo in ganadores:
+                        if ganador in winner or winner in ganador:
+                            ad = False
+                            conteo += count
+                    if ad:
+                        ganadores.append((winner,count))
+                break
+            elif premio.lower() in award.lower():
+                append = False
+                premio = award
+                huespedes = huespedes.union(presenters)
+                nominados = nominados.union(nominees)
+                for winner, count in winners:
+                    ad = True
+                    for ganador, conteo in ganadores:
+                        if ganador in winner or winner in ganador:
+                            ad = False
+                            conteo += count
+                    if ad:
+                        ganadores.append((winner,count))
+                break
+        if append:
+            # print("appending", award, presenters, nominees, winners)
+            awardlist.append((award, presenters, nominees, winners))
+
+    for award, presenters, nominees, winners in awardlist:
+        if winners == []:
+            winners = "unknown"
+            continue
+        most = (winners[0])
+        for winner, count in winners:
+            if count > most[1]:
+                most =(winner,count)
+            nominees. add(winner)
+        winners = most[0]
+
+    for award, presenters, nominees, winner in awardlist:
+        nominees_dict[award] = nominees
+        winners_dict[award] = winner
+        presenters_dict[award] = presenters
+        # print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
+
+    return nominees_dict, winners_dict, presenters_dict
 
 # main_loop()

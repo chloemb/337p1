@@ -64,6 +64,8 @@ def calc_translation(result, answer):
     between them, and returns a translation dictionary and
     score.'''
 
+    print("calcing", "RESULT", result, "ANSWER", answer)
+
     resultmap = {norm_text(r): r for r in result}
     answermap = {norm_text(a): a for a in answer}
     result = set(resultmap.keys())
