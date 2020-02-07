@@ -203,7 +203,7 @@ def main_loop(year):
 
     for line in tweets:
         # print(line)
-        if tweet_counter == 20000:
+        if tweet_counter == 50000:
             # print("ending")
             nominees, winners, presenters = wrapup()
             end_time = time.time()
