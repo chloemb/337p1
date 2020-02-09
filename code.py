@@ -327,7 +327,9 @@ def wrapup():
     nominees_dict = {}
     winners_dict = {}
     presenters_dict = {}
-    
+
+    newmasterlist=[]
+
     for award, presenters, nominees, winners in masterlist:
         for symbol in cutoff_symbols:
             if symbol in award:
@@ -355,8 +357,9 @@ def wrapup():
             for swinner in winners:
                 if swinner == winner:
                     count +=1
-            combined_winners.append(winner,count)
-        winners = combined_winners
+            combined_winners.append((winner,count))
+        newmasterlist.append((award,presenters,nominees,winners))
+    masterlist=newmasterlist
 
     awardlist=[]
     for award, presenters, nominees, winners in masterlist:
