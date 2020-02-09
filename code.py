@@ -80,11 +80,13 @@ def find_next_award(pairs, best_index):
     counter = 0
     award = []
     while counter < len(pairs)-best_index:
-        if pairs[counter+best_index-1][0] == 'best' or pairs[counter+best_index-1][0] == 'Best':
+        if pairs[counter+best_index-1][0] == 'cecil':
+            return ['cecil']
+        if pairs[counter+best_index-1][0] == 'best':
             award = ['best']
             # counter += 1
             while counter < len(pairs)-best_index and pairs[counter+best_index][1].startswith(('N', 'VB', 'JJ')):
-                award.append(depunctuate(pairs[counter+best_index][0].lower()))
+                award.append(depunctuate(pairs[counter+best_index][0]))
                 counter += 1
             return award
         counter += 1
@@ -98,18 +100,15 @@ def find_next_award_hardcoded(pairs, best_index):
     # print("JUST FOUND AN AWARD:", raw_award, "from", tweet)
     found = False
 
-    keywords = ("drama", "musical", "comedy", "picture", "series", "tv", "television", "motion")
+    keywords = ("drama", "musical", "comedy", "picture", "series", "tv", "television", "motion", "movie")
     contained_keywords = []
     for keyword in keywords:
         if keyword in tweet:
             contained_keywords.append(keyword)
-
     if contained_keywords:
-        # print("CONTAINED KEYWORDS:", contained_keywords)
         for keyword in contained_keywords:
             if keyword not in raw_award:
                 raw_award.append(keyword)
-        # print("TRANSFORMED", tweet, "to", raw_award)
 
     raw_award = ' '.join(raw_award)
 
@@ -133,18 +132,11 @@ def industry_name(name):
 
     if name in not_person:
         return "not found"
-
     if name in searched_people:
         return name
-    # for trial in potential_movies:
-    #     if trial == name:
-    #         return "not found"
-
     if name in basic_names:
         searched_people.append(name)
         return name
-    # potential_movies.append(name)
-    # print("didn't find", name)
 
     not_person.append(name)
     return "not found"
@@ -152,25 +144,17 @@ def industry_name(name):
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
-    # print("SEARCHED MEDIA IS", searched_media)
-    # print("searching for", title)
 
     if title.startswith(" "):
         title = title[1:]
-    # for trial in nothing:
-    #     if trial == title:
-    #         return "not found"
 
     if title in not_movie:
         return "not found"
-
     if title in searched_media:
         return title
     if title in basic_titles:
         searched_media.append(title)
-        # print("found media named", title)
         return title
-    # nothing.append(title)
 
     not_movie.append(title)
     return "not found"
@@ -208,7 +192,6 @@ def can_combine_item_set(item, answers):
     for set_item in answers:
         can_combine = combine_award(item, set_item)
         if can_combine:
-            # print("can combine", item, set_item, "into", can_combine)
             return can_combine
     return item
 
@@ -306,7 +289,7 @@ def main_loop(year):
             print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
             return nominees, winners, presenters
 
-        if "best" not in line['text'].lower():
+        if not ("best" in line['text'].lower() or "award" in line['text'].lower()):
             tweet_counter += 1
             continue
 
@@ -318,6 +301,7 @@ def main_loop(year):
                 clean_parsed.append(pair)
 
         clean_parsed = [(item[0].lower(), item[1]) for item in clean_parsed]
+        # print(clean_parsed)
 
         congrats_found = False
 
