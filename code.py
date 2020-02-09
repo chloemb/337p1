@@ -111,7 +111,6 @@ def industry_name(name):
     # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
     # print(searched_people)
 
-    name = name.lower()
     if name.startswith(" "):
         name = name[1:]
 
@@ -139,7 +138,6 @@ def media_name(title):
     # print("SEARCHED MEDIA IS", searched_media)
     # print("searching for", title)
 
-    title = title.lower()
     if title.startswith(" "):
         title = title[1:]
     # for trial in nothing:
@@ -295,20 +293,27 @@ def main_loop(year):
             if not pair[0].startswith(ignore_as_first_char):
                 clean_parsed.append(pair)
 
+        clean_parsed = [(item[0].lower(), item[1]) for item in clean_parsed]
+
+        congrats_found = False
+
+        for i in clean_parsed:
+            if "ongrat" in i[0]:
+                congrats_found = True
+
         # now, match proper nouns to verbs
         length = len(clean_parsed)
         counter = 0
         while counter < length:
             # find every group of words labeled NNP
 
-            if clean_parsed[counter][1] == 'NNP':
+            if clean_parsed[counter][1] == 'NNP' and "ongrat" not in clean_parsed[counter][0]:
                 potential_item, noun_len = full_nnp(clean_parsed[counter: length])
                 counter += noun_len
 
                 # find the next verb for each NNP group
                 next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
                 if next_verb != "":
-                    next_verb = next_verb.lower()
                     if not any(word in next_verb for word in ("present", "win", "announ", "won", "host", "accept")):
                         counter += 1
                         break
@@ -331,6 +336,8 @@ def main_loop(year):
                         #     if this_actor != "Not A Movie":
                         #         update_master(award, this_actor, next_verb)
                         update_master(award, potential_item, next_verb)
+                        if congrats_found:
+                            update_master(award, potential_item, next_verb)
             else:
                 counter += 1
 
