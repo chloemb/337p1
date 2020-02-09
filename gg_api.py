@@ -52,7 +52,7 @@ def get_winner(year):
         data = json.load(json_file)
         for item in data:
             if item in OFFICIAL_AWARDS_1315:
-                winners[item] = data[item]["Winner"][0][0] if not data[item]["Winner"] == [] else []
+                winners[item] = data[item]["Winner"]
     # print(winners)
     return winners
 
