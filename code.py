@@ -220,11 +220,7 @@ def update_master(award, person, verb):
                 presenters.add(person)
                 return
             if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
-                for winner, count in winners:
-                    if winner in person or person in winner:
-                        count += 1
-                        return
-                winners.append((person, 1))
+                winners.append(person)
                 return
             actors.add(person)
             return
@@ -233,11 +229,12 @@ def update_master(award, person, verb):
         newset.add(person)
         masterlist.append((award,newset,set(),[]))
     if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
-        masterlist.append((award, set(), set(), [(person, 1)]))
+        masterlist.append((award, set(), set(),[]))
     else:
         actorset = set()
         actorset.add(person)
         masterlist.append((award, set(), actorset, []))
+
 
 
 def main_loop(year):
@@ -330,7 +327,7 @@ def wrapup():
     nominees_dict = {}
     winners_dict = {}
     presenters_dict = {}
-
+    
     for award, presenters, nominees, winners in masterlist:
         for symbol in cutoff_symbols:
             if symbol in award:
@@ -341,19 +338,25 @@ def wrapup():
             for nominee in nominees:
                 if symbol in nominee:
                     nominee = nominee.split(symbol)[0]
-            for winner, count in winners:
+            combined_winners=[]
+            searched_winners = []
+            for winner in winners:
+                newname = winner
                 if symbol in winner:
                     newname = winner.split(symbol)[0]
-                    if newname == winner:
-                        break
-                    for otherwinner, othercount in winners:
-                        if newname in otherwinner or otherwinner in newname:
-                            othercount += count
-                            try:
-                                winners.remove((winner,count))
-                            except:
-                                pass
-                    winner = newname
+
+        searched_winners=[]
+        combined_winners=[]
+        for winner in winners:
+            if winner in searched_winners:
+                continue
+            searched_winners.append(winner)
+            count = 0
+            for swinner in winners:
+                if swinner == winner:
+                    count +=1
+            combined_winners.append(winner,count)
+        winners = combined_winners
 
     awardlist=[]
     for award, presenters, nominees, winners in masterlist:
