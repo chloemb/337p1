@@ -11,5 +11,5 @@ with open("title.basics.tsv") as basics:
                     year = int(items[5])
                 except:
                     year = 0
-                if year > 2010:
+                if year > 2012:
                     csvout.writerow([items[2]])

@@ -8,37 +8,36 @@ import unidecode
 from bs4 import BeautifulSoup
 import read_json
 from nltk.metrics import edit_distance
+import cProfile
+
+start_time = time.time()
 
 OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
 OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
 
+people_awards = []
+real_awards = []
+
 # WE MAY NEED TO UNCOMMENT THIS?
 # nltk.download('averaged_perceptron_tagger')
 
-start_time = time.time()
 # print("\n\n\nNEW RUN")
 
 searched_pairs = []
-
 searched_people = []
-
 searched_media = []
 
 not_person = []
-
 not_movie = []
 
 basic_names = []
-
 basic_titles = []
 
 masterlist = []
 
-people_awards = ['cecil b. demille award', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
-
 
 def list_actors():
-    with open("name.updated.tsv") as basics:
+    with open("new_name_updated.tsv") as basics:
         for line in basics:
                 basic_names.append(line.lower().split('\n')[0])
 
@@ -77,26 +76,44 @@ def depunctuate(stringy):
     return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0]
 
 
-def find_next_award(pairs):
+def find_next_award(pairs, best_index):
     counter = 0
-    award = ""
-    while counter < len(pairs):
-        if pairs[counter][0] == 'best' or pairs[counter][0] == 'Best':
-            award = "Best"
-            counter += 1
-            while counter < len(pairs) and pairs[counter][1].startswith('N'):
-                award += " " + pairs[counter][0]
+    award = []
+    while counter < len(pairs)-best_index:
+        if pairs[counter+best_index-1][0] == 'best' or pairs[counter+best_index-1][0] == 'Best':
+            award = ['best']
+            # counter += 1
+            while counter < len(pairs)-best_index and pairs[counter+best_index][1].startswith(('N', 'VB', 'JJ')):
+                award.append(depunctuate(pairs[counter+best_index][0].lower()))
                 counter += 1
-            return depunctuate(award)
+            return award
         counter += 1
-    return depunctuate(award)
+    return award
 
 
-def find_next_award_hardcoded(pairs):
+def find_next_award_hardcoded(pairs, best_index):
     # find closest official award name
-    raw_award = find_next_award(pairs)
+    tweet = [pair[0] for pair in pairs]
+    raw_award = find_next_award(pairs, best_index)
+    # print("JUST FOUND AN AWARD:", raw_award, "from", tweet)
     found = False
-    for real_award in OFFICIAL_AWARDS_1315:
+
+    keywords = ("drama", "musical", "comedy", "picture", "series", "tv", "television", "motion")
+    contained_keywords = []
+    for keyword in keywords:
+        if keyword in tweet:
+            contained_keywords.append(keyword)
+
+    if contained_keywords:
+        # print("CONTAINED KEYWORDS:", contained_keywords)
+        for keyword in contained_keywords:
+            if keyword not in raw_award:
+                raw_award.append(keyword)
+        # print("TRANSFORMED", tweet, "to", raw_award)
+
+    raw_award = ' '.join(raw_award)
+
+    for real_award in real_awards:
         potential_award = combine_award(raw_award, real_award)
         if potential_award:
             raw_award = potential_award
@@ -162,8 +179,8 @@ def media_name(title):
 
 
 def combine_award(name1, name2):
-    if name1 == name2:
-        return name1
+    if name1.lower() == name2.lower():
+        return name1.lower()
     if len(name1) >= len(name2):
         big = name1.lower()
         smol = name2.lower()
@@ -179,7 +196,6 @@ def combine_award(name1, name2):
         matched = False
         for bigword in bigwords:
             if any(bigword in syn_list and smolword in syn_list for syn_list in prominent_synonyms):
-            # if bigword in prominent_synonyms[0] and smolword in prominent_synonyms[0] or bigword in prominent_synonyms[1] and smolword in prominent_synonyms[1]:
                 matched = True
                 break
             if edit_distance(smolword, bigword, transpositions=True) < 3:
@@ -232,7 +248,7 @@ def update_master(award, item, verb):
                 nominees[nom_item] = 1
 
             if any(word in verb for word in win_verbs):
-                item = can_combine_item_set(item, presenters)
+                item = can_combine_item_set(item, winners)
                 try:
                     winners[item] += 1
                 except:
@@ -268,9 +284,17 @@ def main_loop(year):
     list_movies()
     print("listed movies in", time.time() - start_time)
 
+    # ADJUST THIS
+    official_awards = OFFICIAL_AWARDS_1315
+
+    for award in official_awards:
+        if any(people_word in award for people_word in ("perform", "direct", "cecil")):
+            people_awards.append(award)
+        real_awards.append(award)
+
     for line in tweets:
 
-        if tweet_counter % 1000 == 0:
+        if tweet_counter % 10000 == 0:
             print(tweet_counter)
 
         if tweet_counter == len(tweets) - 1:
@@ -315,21 +339,8 @@ def main_loop(year):
                     new_counter = counter + verb_ind + 1
 
                     # find the next group of nouns starting with 'best'
-                    award = find_next_award_hardcoded(clean_parsed[new_counter: length])
+                    award = find_next_award_hardcoded(clean_parsed, new_counter)
                     if award:
-                        # # check if it's a real actor's name
-                        # this_actor = industry_name(potential_actor)
-                        # #try:
-                        #     #this_actor = actor_name(potential_actor)
-                        # #except:
-                        #     #break
-                        # if this_actor != "Not A Relevant Person":
-                        #     # print("updating master", award, this_actor, next_verb)
-                        #     update_master(award, this_actor, next_verb)
-                        # else:
-                        #     this_actor = media_name(potential_actor)
-                        #     if this_actor != "Not A Movie":
-                        #         update_master(award, this_actor, next_verb)
                         update_master(award, potential_item, next_verb)
             else:
                 counter += 1
@@ -364,6 +375,8 @@ def wrapup():
                 nominees[winner] = count
             final_winner = most[0]
         if nominees.items():
+            if nominees.get(final_winner):
+                del nominees[final_winner]
             if len(nominees) >= 4:
                 sorted_noms = sorted(nominees.items(), key=lambda x: x[1], reverse=True)
                 final_noms = list(pair[0] for pair in sorted_noms)[:4]
@@ -372,7 +385,7 @@ def wrapup():
         if presenters.items():
             if len(nominees) >= 2:  # SHOULD THIS STAY LIKE THIS?
                 sorted_pres = sorted(presenters.items(), key=lambda x: x[1], reverse=True)
-                final_pres = list(pair[0] for pair in sorted_pres)[:4]
+                final_pres = list(pair[0] for pair in sorted_pres)[:2]
             else:
                 final_pres = list(presenters.keys())
 
