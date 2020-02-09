@@ -38,7 +38,7 @@ people_awards = ['cecil b. demille award', 'best performance by an actress in a 
 
 
 def list_actors():
-    with open("name.updated.tsv") as basics:
+    with open("new_name_updated.tsv") as basics:
         for line in basics:
                 basic_names.append(line.lower().split('\n')[0])
 

@@ -6,7 +6,7 @@ with open("name.basics.tsv") as basics:
         csvout = csv.writer(output)
         for line in basics:
             items = line.split('\t')
-            if "act" in items[4] or "director" in items[4]:
+            if "act" in items[4] or "director" in items[4] or "producer" in items[4]:
                 try:
                     year = int(items[3])
                 except:
