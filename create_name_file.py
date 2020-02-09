@@ -10,6 +10,6 @@ with open("name.basics.tsv") as basics:
                 try:
                     year = int(items[3])
                 except:
-                    year = 0
+                    year = 3000
                 if year > 2010:
                     csvout.writerow([items[1]])
