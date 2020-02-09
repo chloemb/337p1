@@ -21,6 +21,12 @@ start_time = time.time()
 
 searched_pairs = []
 
+searched = []
+
+potential_movies = []
+
+nothing = []
+
 
 def find_next_verb(pairs):
     # print("finding next verb from", pairs)
@@ -117,20 +123,33 @@ def actor_name(name):
 
 def industry_name(name):
     # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
+    print(name)
     name = name.lower()
-    with open("name.basics.tsv") as basics:
+    for trial in searched:
+        if trial == name:
+            return name
+    for trial in potential_movies:
+        if trial == name:
+            return "Not A Relevant Person"
+    with open("name.updated.tsv") as basics:
         for line in basics:
             if name in line.lower():
+                searched.append(name)
                 return name
+        potential_movies.append(name)
         return "Not A Relevant Person"
 
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
     title = title.lower()
-    with open("title.akas.tsv") as basics:
+    for trial in nothing:
+        if trial == title:
+            return "Not A Movie"
+    with open("title.updated.tsv") as basics:
         for line in basics:
             if title in line.lower():
+                searched.append(title)
                 return title
         return "Not A Movie"
 
@@ -245,12 +264,16 @@ def main_loop(year):
                     award = find_next_award_hardcoded(clean_parsed[new_counter: length])
                     if award:
                         # check if it's a real actor's name
-                        try:
-                            this_actor = actor_name(potential_actor)
-                        except:
-                            break
-                        if this_actor != "":
+                        this_actor = industry_name(potential_actor)
+                        #try:
+                            #this_actor = actor_name(potential_actor)
+                        #except:
+                            #break
+                        if this_actor != "Not A Relevant Person":
                             # print("updating master")
+                            #update_master(award, this_actor, next_verb)
+                            update_master(award, this_actor, next_verb)
+                        if this_actor != "Not A Movie":
                             update_master(award, this_actor, next_verb)
             else:
                 counter += 1
