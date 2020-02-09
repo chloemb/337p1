@@ -214,26 +214,34 @@ masterlist = []
 def update_master(award, person, verb):
     # print("updating",award,person,verb)
 
-    for listaward, presenters, actors, winners in masterlist:
+    for listaward, presenters, nominees, winners in masterlist:
         if award == listaward:
             if any(word in verb for word in ("present", "host", "announ")):
                 presenters.add(person)
                 return
+            try:
+                nominees[person]+=1
+            except:
+                nominees[person] =1
             if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
-                winners.append(person)
-                return
-            actors.add(person)
+                try:
+                    winners[person] += 1
+                except:
+                    winners[person] = 1
             return
     if any(word in verb for word in ("present", "host", "announ")):
         newset = set()
         newset.add(person)
-        masterlist.append((award,newset,set(),[]))
+        masterlist.append((award,newset,dict(),dict()))
+        return
     if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
-        masterlist.append((award, set(), set(),[]))
+        newdict = dict()
+        newdict[person] = 1
+        masterlist.append((award, set(), newdict,newdict))
     else:
-        actorset = set()
-        actorset.add(person)
-        masterlist.append((award, set(), actorset, []))
+        newdict = dict()
+        newdict[person] = 1
+        masterlist.append((award, set(), newdict,dict()))
 
 
 
@@ -328,88 +336,23 @@ def wrapup():
     winners_dict = {}
     presenters_dict = {}
 
-    newmasterlist=[]
-
-    for award, presenters, nominees, winners in masterlist:
-        for symbol in cutoff_symbols:
-            if symbol in award:
-                award = award.split(symbol)[0]
-            for presenter in presenters:
-                if symbol in award:
-                    presenter = presenter.split(symbol)[0]
-            for nominee in nominees:
-                if symbol in nominee:
-                    nominee = nominee.split(symbol)[0]
-            combined_winners=[]
-            searched_winners = []
-            for winner in winners:
-                newname = winner
-                if symbol in winner:
-                    newname = winner.split(symbol)[0]
-
-        searched_winners=[]
-        combined_winners=[]
-        for winner in winners:
-            if winner in searched_winners:
-                continue
-            searched_winners.append(winner)
-            count = 0
-            for swinner in winners:
-                if swinner == winner:
-                    count +=1
-            combined_winners.append((winner,count))
-        newmasterlist.append((award,presenters,nominees,winners))
-    masterlist=newmasterlist
-
-    awardlist=[]
-    for award, presenters, nominees, winners in masterlist:
-        append = True
-        for premio, huespedes, nominados, ganadores in awardlist:
-            if award.lower() in premio.lower():
-                append = False
-                huespedes = huespedes.union(presenters)
-                nominados = nominados.union(nominees)
-                for winner, count in winners:
-                    ad = True
-                    for ganador, conteo in ganadores:
-                        if ganador in winner or winner in ganador:
-                            ad = False
-                            conteo += count
-                    if ad:
-                        ganadores.append((winner,count))
-                break
-            elif premio.lower() in award.lower():
-                append = False
-                premio = award
-                huespedes = huespedes.union(presenters)
-                nominados = nominados.union(nominees)
-                for winner, count in winners:
-                    ad = True
-                    for ganador, conteo in ganadores:
-                        if ganador in winner or winner in ganador:
-                            ad = False
-                            conteo += count
-                    if ad:
-                        ganadores.append((winner,count))
-                break
-        if append:
-            # print("appending", award, presenters, nominees, winners)
-            awardlist.append((award, presenters, nominees, winners))
+    global masterlist
 
     pythonwhy = []
-    for award, presenters, nominees, winners in awardlist:
-        if winners == []:
+    for award, presenters, nominees, winners in masterlist:
+        if winners.items()==[]:
             winners = "unknown"
+            pythonwhy.append((award, presenters, nominees, "unknown"))
             continue
         most = (winners[0])
-        for winner, count in winners:
+        for winner, count in winners.items():
             if count > most[1]:
                 most = (winner, count)
             nominees.add(winner)
         winners = most[0]
         pythonwhy.append((award, presenters, nominees, most[0]))
 
-    for award, presenters, nominees, winner in awardlist:
+    for award, presenters, nominees, winner in pythonwhy:
         nominees_dict[award] = nominees
         winners_dict[award] = winner
         presenters_dict[award] = presenters
