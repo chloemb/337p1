@@ -35,7 +35,7 @@ basic_titles = []
 def list_actors():
     with open("name.updated.tsv") as basics:
         for line in basics:
-            basic_names.append(line.lower())
+            basic_names.append(line.lower().split('\n')[0])
 
 
 def list_movies():
@@ -139,25 +139,36 @@ def actor_name(name):
 
 def industry_name(name):
     # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
-    print(name)
+    # print("NAMES", basic_names)
+    # print("Industry name", name)
+    # print("basic names length", len(basic_names))
     name = name.lower()
+    if name.startswith(" "):
+        name = name[1:]
+    # print(name)
     for trial in searched:
         if name == trial:
+            # print("found name in searched")
             return name
     for trial in potential_movies:
         if trial == name:
+            # print("found name in potential movies")
             return "Not A Relevant Person"
     #with open("name.updated.tsv") as basics:
     if name in basic_names:
         searched.append(name)
+        # print("FOUND", name)
         return name
     potential_movies.append(name)
+    # print("didn't find", name)
     return "Not A Relevant Person"
 
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
     title = title.lower()
+    if title.startswith(" "):
+        title = title[1:]
     #with open("title.updated.tsv") as basics:
     for trial in nothing:
         if trial == title:
@@ -235,14 +246,22 @@ def main_loop(year):
     ignore_as_first_char = ('@', '#', 'RT')
     tweet_counter = 0
 
+    list_actors()
+    print("listed actors in", time.time() - start_time)
+    # print("basic names", basic_names)
+    list_movies()
+    print("listed movies in", time.time() - start_time)
+
     for line in tweets:
-        # print(line)
+        if tweet_counter % 1000 == 0:
+            print(tweet_counter)
         if tweet_counter == len(tweets) - 1:
             # print("ending")
             nominees, winners, presenters = wrapup()
             end_time = time.time()
             # print(nominees, winners, presenters)
             print("Runtime:", end_time - start_time, "seconds")
+            print(nominees, winners, presenters)
             return nominees, winners, presenters
 
         if "best" not in line['text'].lower():
@@ -287,6 +306,7 @@ def main_loop(year):
                         if this_actor != "Not A Relevant Person":
                             # print("updating master")
                             #update_master(award, this_actor, next_verb)
+                            # print("updating master", award, this_actor, next_verb)
                             update_master(award, this_actor, next_verb)
                         this_actor = media_name(potential_actor)
                         if this_actor != "Not A Movie":
@@ -369,6 +389,7 @@ def wrapup():
             # print("appending", award, presenters, nominees, winners)
             awardlist.append((award, presenters, nominees, winners))
 
+    pythonwhy = []
     for award, presenters, nominees, winners in awardlist:
         if winners == []:
             winners = "unknown"
@@ -376,9 +397,10 @@ def wrapup():
         most = (winners[0])
         for winner, count in winners:
             if count > most[1]:
-                most =(winner,count)
-            nominees. add(winner)
+                most = (winner, count)
+            nominees.add(winner)
         winners = most[0]
+        pythonwhy.append((award, presenters, nominees, most[0]))
 
     for award, presenters, nominees, winner in awardlist:
         nominees_dict[award] = nominees
@@ -389,3 +411,11 @@ def wrapup():
     return nominees_dict, winners_dict, presenters_dict
 
 # main_loop()
+
+
+# list_actors()
+# print(len(basic_names))
+# print(industry_name(" Bill Murray"))
+# print(industry_name(" Bill Murray"))
+# print(industry_name(" Bill Murray"))
+# print(industry_name(" Bill Murray"))
