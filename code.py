@@ -27,6 +27,22 @@ potential_movies = []
 
 nothing = []
 
+basic_names = []
+
+basic_titles = []
+
+
+def list_actors():
+    with open("name.updated.tsv") as basics:
+        for line in basics:
+            basic_names.append(line.lower())
+
+
+def list_movies():
+    with open("title.updated.tsv") as basics:
+        for line in basics:
+            basic_titles.append(line.lower())
+
 
 def find_next_verb(pairs):
     # print("finding next verb from", pairs)
@@ -126,32 +142,31 @@ def industry_name(name):
     print(name)
     name = name.lower()
     for trial in searched:
-        if trial == name:
+        if name == trial:
             return name
     for trial in potential_movies:
         if trial == name:
             return "Not A Relevant Person"
-    with open("name.updated.tsv") as basics:
-        for line in basics:
-            if name in line.lower():
-                searched.append(name)
-                return name
-        potential_movies.append(name)
-        return "Not A Relevant Person"
+    #with open("name.updated.tsv") as basics:
+    if name in basic_names:
+        searched.append(name)
+        return name
+    potential_movies.append(name)
+    return "Not A Relevant Person"
 
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
     title = title.lower()
+    #with open("title.updated.tsv") as basics:
     for trial in nothing:
         if trial == title:
             return "Not A Movie"
-    with open("title.updated.tsv") as basics:
-        for line in basics:
-            if title in line.lower():
-                searched.append(title)
-                return title
-        return "Not A Movie"
+    if title in basic_titles:
+        searched.append(title)
+        return title
+    nothing.append(title)
+    return "Not A Movie"
 
 
 def combine_award(name1, name2):
@@ -217,12 +232,12 @@ def update_master(award, person, verb):
 def main_loop(year):
     print("start")
     tweets = read_json.read_json(year)
-    ignore_as_first_char = ('@', '#')
+    ignore_as_first_char = ('@', '#', 'RT')
     tweet_counter = 0
 
     for line in tweets:
         # print(line)
-        if tweet_counter == 50000:
+        if tweet_counter == len(tweets) - 1:
             # print("ending")
             nominees, winners, presenters = wrapup()
             end_time = time.time()
@@ -273,6 +288,7 @@ def main_loop(year):
                             # print("updating master")
                             #update_master(award, this_actor, next_verb)
                             update_master(award, this_actor, next_verb)
+                        this_actor = media_name(potential_actor)
                         if this_actor != "Not A Movie":
                             update_master(award, this_actor, next_verb)
             else:
