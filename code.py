@@ -130,22 +130,16 @@ def actor_name(name):
     if len(existence) > 1:
         actor = existence[0].find_all("a")[1].string
 
-    # else:
-    #     print("Not an Actor")
-    # print(actor)
     searched_pairs.append((name,actor))
     return actor
 
 
 def industry_name(name):
     # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
-    # print("NAMES", basic_names)
-    # print("Industry name", name)
-    # print("basic names length", len(basic_names))
     name = name.lower()
     if name.startswith(" "):
         name = name[1:]
-    # print(name)
+
     for trial in searched:
         if name == trial:
             # print("found name in searched")
@@ -154,10 +148,9 @@ def industry_name(name):
         if trial == name:
             # print("found name in potential movies")
             return "Not A Relevant Person"
-    #with open("name.updated.tsv") as basics:
+
     if name in basic_names:
         searched.append(name)
-        # print("FOUND", name)
         return name
     potential_movies.append(name)
     # print("didn't find", name)
@@ -212,8 +205,6 @@ masterlist = []
 
 
 def update_master(award, person, verb):
-    # print("updating",award,person,verb)
-
     for listaward, presenters, nominees, winners in masterlist:
         if award == listaward:
             if any(word in verb for word in ("present", "host", "announ")):
@@ -297,7 +288,7 @@ def main_loop(year):
                     if not any(word in next_verb for word in ("present", "win", "announ", "won", "host", "accept")):
                         counter += 1
                         break
-                    new_counter = counter + verb_ind
+                    new_counter = counter + verb_ind + 1
 
                     # find the next group of nouns starting with 'best'
                     award = find_next_award_hardcoded(clean_parsed[new_counter: length])
@@ -309,8 +300,6 @@ def main_loop(year):
                         #except:
                             #break
                         if this_actor != "Not A Relevant Person":
-                            # print("updating master")
-                            #update_master(award, this_actor, next_verb)
                             # print("updating master", award, this_actor, next_verb)
                             update_master(award, this_actor, next_verb)
                         else:
@@ -344,11 +333,13 @@ def wrapup():
             winners = "unknown"
             pythonwhy.append((award, presenters, nominees, "unknown"))
             continue
-        most = (winners[0])
+        most = (0,0)
         for winner, count in winners.items():
+            if most==(0,0):
+                most=(winner,count)
             if count > most[1]:
                 most = (winner, count)
-            nominees.add(winner)
+            nominees[winner] = count
         winners = most[0]
         pythonwhy.append((award, presenters, nominees, most[0]))
 
@@ -365,7 +356,7 @@ def wrapup():
 
 # list_actors()
 # print(len(basic_names))
-# print(industry_name(" Bill Murray"))
+# print(industry_name(" Um"))
 # print(industry_name(" Bill Murray"))
 # print(industry_name(" Bill Murray"))
 # print(industry_name(" Bill Murray"))
