@@ -308,9 +308,10 @@ def main_loop(year):
                             #update_master(award, this_actor, next_verb)
                             # print("updating master", award, this_actor, next_verb)
                             update_master(award, this_actor, next_verb)
-                        this_actor = media_name(potential_actor)
-                        if this_actor != "Not A Movie":
-                            update_master(award, this_actor, next_verb)
+                        else:
+                            this_actor = media_name(potential_actor)
+                            if this_actor != "Not A Movie":
+                                update_master(award, this_actor, next_verb)
             else:
                 counter += 1
 
