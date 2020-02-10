@@ -1,4 +1,5 @@
 '''Version 0.35'''
+import nltk
 
 
 OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
@@ -6,7 +7,7 @@ OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - mu
 answer_file_name = 'our_answers'
 
 # FIGURE OUT YEAR
-this_year = '2013'
+# this_year = '2013'
 
 import code
 import json
@@ -26,7 +27,10 @@ def get_awards(year):
     of this function or what it returns.'''
     # Your code here
     # FIX THIS
-    return OFFICIAL_AWARDS_1315
+    with open(answer_file_name + str(year) + '.json') as json_file:
+        data = json.load(json_file)
+        awards = data["Awards"]
+    return awards
 
 def get_nominees(year):
     '''Nominees is a dictionary with the hard coded award
@@ -76,8 +80,23 @@ def pre_ceremony():
     plain text file. It is the first thing the TA will run when grading.
     Do NOT change the name of this function or what it returns.'''
     # Your code here
+    nltk.download('averaged_perceptron_tagger')
     print("Pre-ceremony processing complete.")
     return
+
+def create_ans_file(nominees, winners, presenters, hosts, awards, year, official_awards):
+    all_answers = {
+        "Host": hosts,
+        "Awards": awards
+    }
+    for award_name in official_awards:
+        all_answers[award_name] = {
+            "Presenters": [presenter for presenter in presenters.get(award_name)] if presenters.get(award_name) else [],
+            "Nominees": [nominee for nominee in nominees.get(award_name)] if nominees.get(award_name) else [],
+            "Winner": winners.get(award_name) if winners.get(award_name) else []
+        }
+    with open(answer_file_name + year + '.json', 'w') as f:
+        json.dump(all_answers, f)
 
 def main():
     '''This function calls your program. Typing "python gg_api.py"
@@ -89,24 +108,19 @@ def main():
 
     # FIGURE OUT HOW TO DEAL WITH YEAR
 
-    nominees, winners, presenters, hosts = code.main_loop(this_year)
+    this_year = input("Please enter the year you'd like to run, or 'c' to run both 2013 and 2015:  ")
 
-    global OFFICIAL_AWARDS_1315
-
-    all_answers = {
-        "Host": hosts,  # PUT HOST HERE
-    }
-
-    for award_name in OFFICIAL_AWARDS_1315:
-        all_answers[award_name] = {
-            "Presenters": [presenter for presenter in presenters.get(award_name)] if presenters.get(award_name) else [],
-            "Nominees": [nominee for nominee in nominees.get(award_name)] if nominees.get(award_name) else [],
-            "Winner": winners.get(award_name) if winners.get(award_name) else []
-        }
-
-    with open(answer_file_name + this_year + '.json', 'w') as f:
-        json.dump(all_answers, f)
-    return
+    if this_year == 'c':
+        years = ['2013', '2015']
+        for year in years:
+            nominees, winners, presenters, hosts, awards = code.main_loop(year, OFFICIAL_AWARDS_1315)
+            create_ans_file(nominees, winners, presenters, hosts, awards, year, OFFICIAL_AWARDS_1315)
+    elif this_year == '2013' or this_year == '2015':
+        nominees, winners, presenters, hosts, awards = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
+        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1315)
+    else:
+        nominees, winners, presenters, hosts, awards = code.main_loop(this_year, OFFICIAL_AWARDS_1819)
+        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1819)
 
 
 if __name__ == '__main__':
