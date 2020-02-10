@@ -37,7 +37,7 @@ basic_titles = []
 
 masterlist = []
 
-
+badawardnames=dict()
 def list_actors():
     with open("new_name_updated.tsv") as basics:
         for line in basics:
@@ -61,6 +61,27 @@ def find_next_verb(pairs):
         counter += 1
     return "", counter
 
+def find_next_award_maria(pairs, best_index):
+    counter = 0
+    award = []
+    while counter < len(pairs)-best_index:
+        if pairs[counter+best_index-1][0] == 'cecil':
+            return ['cecil']
+        if pairs[counter+best_index-1][0] == 'best':
+            award = ['best']
+            # counter += 1
+            removeything = 0
+            while counter < len(pairs)-best_index and pairs[counter+best_index][1] in ['RBS','NN','VBG', 'JJS', 'IN']:
+                award.append(depunctuate(pairs[counter+best_index][0]))
+                if pairs[counter+best_index][1] in ['IN','RBS','VBG','JJS']:
+                    removeything+=1
+                else:
+                    removeything=0
+                counter += 1
+            award = award[:len(award)-removeything-1]
+            return award
+        counter += 1
+    return award
 
 def full_nnp(pairs):
     counter = 0
@@ -345,6 +366,15 @@ def main_loop(year, these_awards):
                     new_counter = counter + verb_ind + 1
 
                     # find the next group of nouns starting with 'best'
+                    badaward = find_next_award_maria(clean_parsed,new_counter)
+                    newbadaward = ""
+                    for word in badaward:
+                        newbadaward=newbadaward+word+" "
+                    try:
+                        badawardnames[newbadaward] += 1
+                    except:
+                        badawardnames[newbadaward] = 1
+
                     award = find_next_award_hardcoded(lower_tagged, new_counter)
                     # print("found award", award)
                     if award:
@@ -359,6 +389,30 @@ def main_loop(year, these_awards):
 
 
 def wrapup():
+    newbadawards=dict()
+    for award,counter in badawardnames.items():
+        matched = False
+        for otheraward,othercounter in newbadawards.items():
+            try:
+                newbadawards[combine_award(award, otheraward)]
+                matched = True
+                othercounter += counter
+                break
+            except:
+                if combine_award(award,otheraward) == award:
+                    matched = True
+                    newbadawards.pop(otheraward)
+                    newbadawards[award]=counter + othercounter
+                    break
+        if not matched:
+            newbadawards[award] = counter
+    removelist=[]
+    for award, counter in newbadawards.items():
+        if counter ==1:
+            removelist.append(award)
+    for award in removelist:
+        newbadawards.pop(award)
+    print(newbadawards)
     print("wrapping up", time.time()-start_time)
     # print("MASTER LIST IS", masterlist)
     cutoff_symbols =[",",".","!","?","http","www"]
