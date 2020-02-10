@@ -26,7 +26,10 @@ def get_awards(year):
     of this function or what it returns.'''
     # Your code here
     # FIX THIS
-    return OFFICIAL_AWARDS_1315
+    with open(answer_file_name + str(year) + '.json') as json_file:
+        data = json.load(json_file)
+        awards = data["Awards"]
+    return awards
 
 def get_nominees(year):
     '''Nominees is a dictionary with the hard coded award
@@ -79,9 +82,10 @@ def pre_ceremony():
     print("Pre-ceremony processing complete.")
     return
 
-def create_ans_file(nominees, winners, presenters, hosts, year, official_awards):
+def create_ans_file(nominees, winners, presenters, hosts, awards, year, official_awards):
     all_answers = {
         "Host": hosts,
+        "Awards": awards
     }
     for award_name in official_awards:
         all_answers[award_name] = {
@@ -107,14 +111,14 @@ def main():
     if this_year == 'c':
         years = ['2013', '2015']
         for year in years:
-            nominees, winners, presenters, hosts = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
-            create_ans_file(nominees, winners, presenters, hosts, year, OFFICIAL_AWARDS_1315)
+            nominees, winners, presenters, hosts, awards = code.main_loop(year, OFFICIAL_AWARDS_1315)
+            create_ans_file(nominees, winners, presenters, hosts, awards, year, OFFICIAL_AWARDS_1315)
     elif this_year == '2013' or this_year == '2015':
-        nominees, winners, presenters, hosts = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
-        create_ans_file(nominees, winners, presenters, hosts, this_year, OFFICIAL_AWARDS_1315)
+        nominees, winners, presenters, hosts, awards = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
+        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1315)
     else:
-        nominees, winners, presenters, hosts = code.main_loop(this_year, OFFICIAL_AWARDS_1819)
-        create_ans_file(nominees, winners, presenters, hosts, this_year, OFFICIAL_AWARDS_1819)
+        nominees, winners, presenters, hosts, awards = code.main_loop(this_year, OFFICIAL_AWARDS_1819)
+        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1819)
 
 
 if __name__ == '__main__':

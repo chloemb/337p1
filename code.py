@@ -39,13 +39,13 @@ masterlist = []
 
 badawardnames=dict()
 def list_actors():
-    with open("new_name_updated.tsv") as basics:
+    with open("new_name_updated.tsv", 'r', encoding='utf-8') as basics:
         for line in basics:
                 basic_names.append(line.lower().split('\n')[0])
 
 
 def list_movies():
-    with open("new_title_updated.tsv") as basics:
+    with open("new_title_updated.tsv", 'r', encoding='utf-8') as basics:
         for line in basics:
                 basic_titles.append(line.lower().split('\n')[0])
 
@@ -61,6 +61,7 @@ def find_next_verb(pairs):
         counter += 1
     return "", counter
 
+
 def find_next_award_maria(pairs, best_index):
     counter = 0
     award = []
@@ -71,17 +72,23 @@ def find_next_award_maria(pairs, best_index):
             award = ['best']
             # counter += 1
             removeything = 0
-            while counter < len(pairs)-best_index and pairs[counter+best_index][1] in ['RBS','NN','VBG', 'JJS', 'IN']:
+            while counter < len(pairs)-best_index and pairs[counter+best_index][1] in ['RBS', 'NN', 'VBG', 'JJS', 'IN']:
+                if depunctuate(pairs[counter+best_index][0]) == '' or depunctuate(pairs[counter+best_index][0])==' ':
+                    counter += 1
+                    continue
                 award.append(depunctuate(pairs[counter+best_index][0]))
+
                 if pairs[counter+best_index][1] in ['IN','RBS','VBG','JJS']:
-                    removeything+=1
+                    removeything += 1
                 else:
                     removeything=0
                 counter += 1
-            award = award[:len(award)-removeything-1]
+            # print(removeything,award,award[:len(award)-removeything])
+            award = award[:len(award)-removeything]
             return award
         counter += 1
     return award
+
 
 def full_nnp(pairs):
     counter = 0
@@ -298,7 +305,7 @@ def main_loop(year, these_awards):
 
         if tweet_counter == len(tweets) - 1:
             # print("ending")
-            nominees, winners, presenters, hosts = wrapup()
+            nominees, winners, presenters, hosts, awards = wrapup()
             end_time = time.time()
             # print(nominees, winners, presenters)
             # print("NOMINEES:", nominees)
@@ -306,7 +313,7 @@ def main_loop(year, these_awards):
             # print("PRESENTERS:", presenters)
             # print("MENTIONS:", mentions)
             print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
-            return nominees, winners, presenters, hosts
+            return nominees, winners, presenters, hosts, awards
 
         if not any(cont_word in line['text'].lower() for cont_word in ("best", "cecil", "monologue")):
             tweet_counter += 1
@@ -366,7 +373,7 @@ def main_loop(year, these_awards):
                     new_counter = counter + verb_ind + 1
 
                     # find the next group of nouns starting with 'best'
-                    badaward = find_next_award_maria(clean_parsed,new_counter)
+                    badaward = find_next_award_maria(lower_tagged,new_counter)
                     newbadaward = ""
                     for word in badaward:
                         newbadaward=newbadaward+word+" "
@@ -407,12 +414,12 @@ def wrapup():
         if not matched:
             newbadawards[award] = counter
     removelist=[]
-    for award, counter in newbadawards.items():
-        if counter ==1:
-            removelist.append(award)
+    # for award, counter in newbadawards.items():
+    #     if counter ==1:
+    #         removelist.append(award)
     for award in removelist:
         newbadawards.pop(award)
-    print(newbadawards)
+    # print(newbadawards)
     print("wrapping up", time.time()-start_time)
     # print("MASTER LIST IS", masterlist)
     cutoff_symbols =[",",".","!","?","http","www"]
@@ -471,5 +478,7 @@ def wrapup():
         winners_dict[award] = winner
         presenters_dict[award] = presenters
 
-    return nominees_dict, winners_dict, presenters_dict, final_men
+    final_awards = list(pair[0] for pair in newbadawards.items())
+
+    return nominees_dict, winners_dict, presenters_dict, final_men, final_awards
 
