@@ -199,7 +199,7 @@ def can_combine_item_set(item, answers):
 
 def update_master(award, item, verb):
     present_verbs = ("present", "host", "announ")
-    win_verbs = ("won", "win", "accept", "receive", "award", "got", "get", "is")
+    win_verbs = ("won", "win", "accept", "receive", "award", "got", "get")
 
     if any(word in verb for word in present_verbs) or award in people_awards:
         # print(award, verb, "is a person")
@@ -290,9 +290,11 @@ def main_loop(year):
             print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
             return nominees, winners, presenters, hosts
 
-        if not ("best" in line['text'].lower() or "cecil" in line['text'].lower()):
+        if not any(cont_word in line['text'].lower() for cont_word in ("best", "cecil", "monologue")):
             tweet_counter += 1
             continue
+
+        monologue = True if "monologue" in line['text'].lower() else False
 
         cleaned = []
         for word in line['text'].split():
@@ -322,16 +324,25 @@ def main_loop(year):
                 potential_item, noun_len = full_nnp(lower_tagged[counter: length])
                 counter += noun_len
 
-                try:
-                    mentions[potential_item] += 1
-                except:
-                    mentions[potential_item] = 1
+                # try:
+                #     mentions[potential_item] += 1
+                # except:
+                #     mentions[potential_item] = 1
+
+                if monologue:
+                    # pot_host = industry_name(potential_item)
+                    # if pot_host != "not found":
+                    try:
+                        mentions[potential_item] += 1
+                    except:
+                        mentions[potential_item] = 1
+                    continue
 
                 # find the next verb for each NNP group
                 next_verb, verb_ind = find_next_verb(lower_tagged[counter: length])
                 if next_verb != "":
                     if not any(word in next_verb for word in (("won", "win", "accept", "receive", "award", "got",
-                                                               "get", "present", "host", "announ"))):
+                                                               "get", "present", "announ", "honor"))):
                         counter += 1
                         break
                     new_counter = counter + verb_ind + 1
@@ -362,7 +373,16 @@ def wrapup():
     presenters_dict = {}
 
     sorted_men = sorted(mentions.items(), key=lambda x: x[1], reverse=True)
-    final_men = list(pair[0] for pair in sorted_men)[:2]
+    # print("MENTIONS:", sorted_men)
+    final_men = []
+    host_count = 0
+    host_search_index = 0
+    while host_count < 2:
+        pot_host = industry_name(sorted_men[host_search_index][0])
+        if pot_host != "not found":
+            final_men.append(pot_host)
+            host_count += 1
+        host_search_index += 1
 
     pythonwhy = []
     for award, presenters, nominees, winners in masterlist:
