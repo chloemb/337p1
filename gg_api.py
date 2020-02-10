@@ -6,7 +6,7 @@ OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - mu
 answer_file_name = 'our_answers'
 
 # FIGURE OUT YEAR
-this_year = '2013'
+# this_year = '2013'
 
 import code
 import json
@@ -79,6 +79,19 @@ def pre_ceremony():
     print("Pre-ceremony processing complete.")
     return
 
+def create_ans_file(nominees, winners, presenters, hosts, year, official_awards):
+    all_answers = {
+        "Host": hosts,
+    }
+    for award_name in official_awards:
+        all_answers[award_name] = {
+            "Presenters": [presenter for presenter in presenters.get(award_name)] if presenters.get(award_name) else [],
+            "Nominees": [nominee for nominee in nominees.get(award_name)] if nominees.get(award_name) else [],
+            "Winner": winners.get(award_name) if winners.get(award_name) else []
+        }
+    with open(answer_file_name + year + '.json', 'w') as f:
+        json.dump(all_answers, f)
+
 def main():
     '''This function calls your program. Typing "python gg_api.py"
     will run this function. Or, in the interpreter, import gg_api
@@ -89,24 +102,19 @@ def main():
 
     # FIGURE OUT HOW TO DEAL WITH YEAR
 
-    nominees, winners, presenters = code.main_loop(this_year)
+    this_year = input("Please enter the year you'd like to run, or 'c' to run both 2013 and 2015:  ")
 
-    global OFFICIAL_AWARDS_1315
-
-    all_answers = {
-        "Host": ['amy poehler', 'tina fey'],  # PUT HOST HERE
-    }
-
-    for award_name in OFFICIAL_AWARDS_1315:
-        all_answers[award_name] = {
-            "Presenters": [presenter for presenter in presenters.get(award_name)] if presenters.get(award_name) else [],
-            "Nominees": [nominee for nominee in nominees.get(award_name)] if nominees.get(award_name) else [],
-            "Winner": winners.get(award_name) if winners.get(award_name) else []
-        }
-
-    with open(answer_file_name + this_year + '.json', 'w') as f:
-        json.dump(all_answers, f)
-    return
+    if this_year == 'c':
+        years = ['2013', '2015']
+        for year in years:
+            nominees, winners, presenters, hosts = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
+            create_ans_file(nominees, winners, presenters, hosts, year, OFFICIAL_AWARDS_1315)
+    elif this_year == '2013' or this_year == '2015':
+        nominees, winners, presenters, hosts = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
+        create_ans_file(nominees, winners, presenters, hosts, this_year, OFFICIAL_AWARDS_1315)
+    else:
+        nominees, winners, presenters, hosts = code.main_loop(this_year, OFFICIAL_AWARDS_1819)
+        create_ans_file(nominees, winners, presenters, hosts, this_year, OFFICIAL_AWARDS_1819)
 
 
 if __name__ == '__main__':
