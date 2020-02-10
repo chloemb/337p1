@@ -345,8 +345,13 @@ def main_loop(year, these_awards):
                         break
                     new_counter = counter + verb_ind + 1
 
-                    negated = True if any(lower_tagged[new_counter-2][0] == negate_word
-                                          for negate_word in ("didn't", "didnt", "not")) else False
+                    if any(lower_tagged[new_counter - 2][0] == negate_word
+                           for negate_word in ("didn't", "didnt", "not")) \
+                            or lower_tagged[new_counter - 3][0] == "should" and \
+                            lower_tagged[new_counter - 2][0] == "have":
+                        negated = True
+                    else:
+                        negated = False
 
                     # find the next group of nouns starting with 'best'
                     badaward = find_next_award_maria(lower_tagged, new_counter)
