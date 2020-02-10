@@ -1,14 +1,14 @@
 import nltk
 import string as str
 import re
-import urllib.request
 import sys
 import time
 import unidecode
-from bs4 import BeautifulSoup
 import read_json
 from nltk.metrics import edit_distance
 import cProfile
+from textblob import TextBlob
+import vaderSentiment
 
 start_time = time.time()
 
@@ -34,6 +34,12 @@ not_movie = []
 
 basic_names = []
 basic_titles = []
+
+fashion_list = {}
+
+fashion_dict = ["dress", "gown", "strap", "tux", "suit", "skirt", "shoe", "lace",
+                "sheer", "sequin", "color", "designer", "ring", "bracelet", "wearing", "sexy", "hot",
+                "fashion", "looks"]
 
 masterlist = []
 
@@ -290,11 +296,13 @@ def main_loop(year):
             print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
             return nominees, winners, presenters, hosts
 
-        if not any(cont_word in line['text'].lower() for cont_word in ("best", "cecil", "monologue")):
+        if not any(cont_word in line['text'].lower() for cont_word in (["best", "cecil", "monologue"] + fashion_dict)):
             tweet_counter += 1
             continue
 
         monologue = True if "monologue" in line['text'].lower() else False
+
+        fashion = True if any(cont_word in line['text'].lower() for cont_word in fashion_dict) else False
 
         cleaned = []
         for word in line['text'].split():
@@ -336,6 +344,15 @@ def main_loop(year):
                         mentions[potential_item] += 1
                     except:
                         mentions[potential_item] = 1
+                    continue
+
+                if fashion:
+                    blob = TextBlob(line['text'])
+                    senti = blob.sentences[0].sentiment.polarity
+                    try:
+                        fashion_list[potential_item] += (senti, 1)
+                    except:
+                        fashion_list[potential_item] = (senti, 1)
                     continue
 
                 # find the next verb for each NNP group
@@ -383,6 +400,16 @@ def wrapup():
             final_men.append(pot_host)
             host_count += 1
         host_search_index += 1
+
+    for potentials in fashion_list:
+        if fashion_list[potentials][1] <= 1:
+            del fashion_list[potentials]
+        else:
+            fashion_list[potentials][0] = fashion_list[potentials][0]/fashion_list[potentials][1]
+    final_fashion = []
+    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1], reverse=True)
+    print(sorted_fashion)
+
 
     pythonwhy = []
     for award, presenters, nominees, winners in masterlist:
