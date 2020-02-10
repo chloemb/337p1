@@ -27,6 +27,8 @@ searched_pairs = []
 searched_people = []
 searched_media = []
 
+mentions = {}
+
 not_person = []
 not_movie = []
 
@@ -63,12 +65,13 @@ def find_next_verb(pairs):
 def full_nnp(pairs):
     counter = 0
     # print("here?", len(pairs),pairs[counter][1])
-    name = ""
+    name = []
     while counter < len(pairs) and pairs[counter][1] == 'NNP':
-        name += " " + depunctuate(pairs[counter][0])
+        name.append(depunctuate(pairs[counter][0]))
         # print(name)
         counter += 1
     # print(name)
+    name = ' '.join(name)
     return name, counter
 
 
@@ -88,6 +91,7 @@ def find_next_award(pairs, best_index):
             while counter < len(pairs)-best_index and pairs[counter+best_index][1].startswith(('N', 'VB', 'JJ')):
                 award.append(depunctuate(pairs[counter+best_index][0]))
                 counter += 1
+            # print("returning award", award)
             return award
         counter += 1
     return award
@@ -127,9 +131,6 @@ def industry_name(name):
     # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
     # print(searched_people)
 
-    if name.startswith(" "):
-        name = name[1:]
-
     if name in not_person:
         return "not found"
     if name in searched_people:
@@ -144,9 +145,6 @@ def industry_name(name):
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
-
-    if title.startswith(" "):
-        title = title[1:]
 
     if title in not_movie:
         return "not found"
@@ -180,9 +178,12 @@ def combine_award(name1, name2):
             if any(bigword in syn_list and smolword in syn_list for syn_list in prominent_synonyms):
                 matched = True
                 break
-            if edit_distance(smolword, bigword, transpositions=True) < 3:
+            if smolword == bigword:
                 matched = True
                 break
+            # if edit_distance(smolword, bigword, transpositions=True) < 3:
+            #     matched = True
+            #     break
         if not matched:
             return False
     return big
@@ -198,7 +199,7 @@ def can_combine_item_set(item, answers):
 
 def update_master(award, item, verb):
     present_verbs = ("present", "host", "announ")
-    win_verbs = ("won", "win", "accept", "receive", "award")
+    win_verbs = ("won", "win", "accept", "receive", "award", "got", "get", "is")
 
     if any(word in verb for word in present_verbs) or award in people_awards:
         # print(award, verb, "is a person")
@@ -274,62 +275,72 @@ def main_loop(year):
         real_awards.append(award)
 
     for line in tweets:
-
         if tweet_counter % 10000 == 0:
             print(tweet_counter)
 
         if tweet_counter == len(tweets) - 1:
             # print("ending")
-            nominees, winners, presenters = wrapup()
+            nominees, winners, presenters, hosts = wrapup()
             end_time = time.time()
             # print(nominees, winners, presenters)
             # print("NOMINEES:", nominees)
             # print("WINNERS:", winners)
             # print("PRESENTERS:", presenters)
+            # print("MENTIONS:", mentions)
             print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
-            return nominees, winners, presenters
+            return nominees, winners, presenters, hosts
 
-        if not ("best" in line['text'].lower() or "award" in line['text'].lower()):
+        if not ("best" in line['text'].lower() or "cecil" in line['text'].lower()):
             tweet_counter += 1
             continue
 
-        clean_parsed = []
-        parsed = nltk.tag.pos_tag(line['text'].split())
-        
-        for pair in parsed:
-            if not pair[0].startswith(ignore_as_first_char):
-                clean_parsed.append(pair)
+        cleaned = []
+        for word in line['text'].split():
+            if not word.startswith(ignore_as_first_char):
+                cleaned.append(word)
 
-        clean_parsed = [(item[0].lower(), item[1]) for item in clean_parsed]
+        tagged = nltk.tag.pos_tag(cleaned)
+
+        lower_tagged = [(item[0].lower(), item[1]) for item in tagged]
         # print(clean_parsed)
 
         congrats_found = False
 
-        for i in clean_parsed:
+        for i in lower_tagged:
             if "ongrat" in i[0]:
                 congrats_found = True
 
+        # print(lower_tagged)
+
         # now, match proper nouns to verbs
-        length = len(clean_parsed)
+        length = len(lower_tagged)
         counter = 0
         while counter < length:
             # find every group of words labeled NNP
 
-            if clean_parsed[counter][1] == 'NNP' and "ongrat" not in clean_parsed[counter][0]:
-                potential_item, noun_len = full_nnp(clean_parsed[counter: length])
+            if lower_tagged[counter][1] == 'NNP' and "ongrat" not in lower_tagged[counter][0]:
+                potential_item, noun_len = full_nnp(lower_tagged[counter: length])
                 counter += noun_len
 
+                try:
+                    mentions[potential_item] += 1
+                except:
+                    mentions[potential_item] = 1
+
                 # find the next verb for each NNP group
-                next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
+                next_verb, verb_ind = find_next_verb(lower_tagged[counter: length])
                 if next_verb != "":
-                    if not any(word in next_verb for word in ("present", "win", "announ", "won", "host", "accept")):
+                    if not any(word in next_verb for word in (("won", "win", "accept", "receive", "award", "got",
+                                                               "get", "present", "host", "announ"))):
                         counter += 1
                         break
                     new_counter = counter + verb_ind + 1
 
                     # find the next group of nouns starting with 'best'
-                    award = find_next_award_hardcoded(clean_parsed, new_counter)
+                    award = find_next_award_hardcoded(lower_tagged, new_counter)
+                    # print("found award", award)
                     if award:
+                        # print("updating master", award, potential_item, next_verb)
                         update_master(award, potential_item, next_verb)
                         if congrats_found:
                             update_master(award, potential_item, next_verb)
@@ -344,11 +355,14 @@ def wrapup():
     # print("MASTER LIST IS", masterlist)
     cutoff_symbols =[",",".","!","?","http","www"]
 
-    print("MASTERLIST IS", masterlist)
+    # print("MASTERLIST IS", masterlist)
 
     nominees_dict = {}
     winners_dict = {}
     presenters_dict = {}
+
+    sorted_men = sorted(mentions.items(), key=lambda x: x[1], reverse=True)
+    final_men = list(pair[0] for pair in sorted_men)[:2]
 
     pythonwhy = []
     for award, presenters, nominees, winners in masterlist:
@@ -388,7 +402,7 @@ def wrapup():
         presenters_dict[award] = presenters
         # print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
 
-    return nominees_dict, winners_dict, presenters_dict
+    return nominees_dict, winners_dict, presenters_dict, final_men
 
 # main_loop()
 

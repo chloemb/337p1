@@ -89,12 +89,12 @@ def main():
 
     # FIGURE OUT HOW TO DEAL WITH YEAR
 
-    nominees, winners, presenters = code.main_loop(this_year)
+    nominees, winners, presenters, hosts = code.main_loop(this_year)
 
     global OFFICIAL_AWARDS_1315
 
     all_answers = {
-        "Host": ['amy poehler', 'tina fey'],  # PUT HOST HERE
+        "Host": hosts,  # PUT HOST HERE
     }
 
     for award_name in OFFICIAL_AWARDS_1315:
