@@ -253,7 +253,7 @@ def update_master(award, item, verb):
         masterlist.append((award, dict(), newdict, dict()))
 
 
-def main_loop(year):
+def main_loop(year, these_awards):
     print("start")
     tweets = read_json.read_json(year)
     print(len(tweets))
@@ -266,10 +266,7 @@ def main_loop(year):
     list_movies()
     print("listed movies in", time.time() - start_time)
 
-    # ADJUST THIS
-    official_awards = OFFICIAL_AWARDS_1315
-
-    for award in official_awards:
+    for award in these_awards:
         if any(people_word in award for people_word in ("perform", "direct", "cecil")):
             people_awards.append(award)
         real_awards.append(award)
@@ -373,7 +370,6 @@ def wrapup():
     presenters_dict = {}
 
     sorted_men = sorted(mentions.items(), key=lambda x: x[1], reverse=True)
-    # print("MENTIONS:", sorted_men)
     final_men = []
     host_count = 0
     host_search_index = 0
@@ -420,20 +416,6 @@ def wrapup():
         nominees_dict[award] = nominees
         winners_dict[award] = winner
         presenters_dict[award] = presenters
-        # print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
 
     return nominees_dict, winners_dict, presenters_dict, final_men
 
-# main_loop()
-
-
-# list_actors()
-# print(len(basic_names))
-# print(industry_name(" Um"))
-# print(industry_name(" Bill Murray"))
-#
-# list_movies()
-# print(len(basic_titles))
-# print(media_name("homeland"))
-# print(media_name("brave"))
-# print(media_name("the breakfast club"))
