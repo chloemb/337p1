@@ -1,3 +1,5 @@
+vaderSentiment
+textblob
 bs4
 lxml
 numpy==1.18.1

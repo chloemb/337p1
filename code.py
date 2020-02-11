@@ -1,6 +1,7 @@
 import nltk
 import time
 import read_json
+from textblob import TextBlob
 
 start_time = time.time()
 
@@ -22,12 +23,18 @@ badawardnames = {}
 basic_names = []
 basic_titles = []
 
+fashion_list = {}
+
+fashion_dict = ["dress", "gown", "strap", "tux", "suit", "skirt", "shoe", "lace",
+                "sheer", "sequin", "designer", "bracelet", "wearing",
+                "fashion"]
+
 # master list of all presenters, winners, nominees
 masterlist = []
 
 # word bags
 win_verbs = ["won", "win", "accept", "receive", "award", "got", "get", "honor"]
-pres_verbs = ["present", "host", "announ"]
+pres_verbs = ["present", "host", "announ", "give", "gave"]
 all_verbs = win_verbs + pres_verbs
 
 # if a tweet has any of these words, it will be parsed
@@ -92,7 +99,8 @@ def full_nnp(pairs):
 
 
 def depunctuate(stringy):
-    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0]
+    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0].replace(
+        "'s", "")
 
 
 def find_next_award(pairs, best_index):
@@ -271,7 +279,7 @@ def main_loop(year, these_awards):
             print(tweet_counter)
 
         if tweet_counter == len(tweets) - 1:
-            nominees, winners, presenters, hosts, awards = wrapup()
+            nominees, winners, presenters, hosts, awards, fashion = wrapup()
             end_time = time.time()
             # print(nominees, winners, presenters)
             # print("NOMINEES:", nominees)
@@ -279,16 +287,18 @@ def main_loop(year, these_awards):
             # print("PRESENTERS:", presenters)
             # print("MENTIONS:", mentions)
             # print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
-            return nominees, winners, presenters, hosts, awards
+            return nominees, winners, presenters, hosts, awards, fashion
 
         lower_text = line['text'].lower()
 
-        if not any(cont_word in lower_text for cont_word in pass_words):
+        if not any(cont_word in lower_text for cont_word in (pass_words + fashion_dict)):
             tweet_counter += 1
             continue
 
         monologue = True if "monologue" in lower_text else False
         congrats_found = True if "ongrat" in lower_text else False
+
+        fashion = True if any(cont_word in line['text'].lower() for cont_word in fashion_dict) else False
 
         cleaned = []
         for word in line['text'].split():
@@ -328,6 +338,15 @@ def main_loop(year, these_awards):
                         mentions[mon_item] = 1
                     continue
 
+                if fashion:
+                    fashion_list.setdefault(potential_item, (0, 1, []))
+                    fashion_list[potential_item][2].append(line['text'])
+                    blank = fashion_list[potential_item][2]
+                    fashion_list[potential_item] = (0,
+                                                    fashion_list[potential_item][1] + 1,
+                                                    blank)
+                    continue
+
                 # find the next verb for each NNP group
                 next_verb, verb_ind = find_next_verb(lower_tagged[counter: length])
                 if next_verb != "":
@@ -337,9 +356,7 @@ def main_loop(year, these_awards):
                     new_counter = counter + verb_ind + 1
 
                     if any(lower_tagged[new_counter - 2][0] == negate_word
-                           for negate_word in ("didn't", "didnt", "not")) \
-                            or lower_tagged[new_counter - 3][0] == "should" and \
-                            lower_tagged[new_counter - 2][0] == "have":
+                           for negate_word in ("didn't", "didnt", "not")):
                         negated = True
                     else:
                         negated = False
@@ -408,6 +425,46 @@ def wrapup():
             final_men.append(pot_host)
             host_count += 1
         host_search_index += 1
+    dlt = [key for key in fashion_list if fashion_list[key][1] < 60]
+    total_sentiment = 0
+    total_mentions = 0
+    for key in dlt:
+        del fashion_list[key]
+    for potentials in fashion_list:
+        for tweets in fashion_list[potentials][2]:
+            blob = TextBlob(tweets)
+            fashion_list[potentials] = (blob.sentences[0].sentiment.polarity+fashion_list[potentials][0],
+                                        fashion_list[potentials][1], fashion_list[potentials][2])
+        fashion_list[potentials] = (fashion_list[potentials][0]/fashion_list[potentials][1],
+                                        fashion_list[potentials][1])
+        total_sentiment += fashion_list[potentials][0]
+        total_mentions += fashion_list[potentials][1]
+    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1][0], reverse=True)
+    avg_sentiment = total_sentiment/total_mentions
+    final_fashion = []
+    counter_forward = 0
+    counter_reverse = len(sorted_fashion) - 1
+    while len(final_fashion) == 0:
+        pot_icon = industry_name(sorted_fashion[counter_forward][0])
+        if pot_icon != "not found":
+            final_fashion.append(pot_icon)
+        counter_forward += 1
+    while len(final_fashion) == 1:
+        pot_drab = industry_name(sorted_fashion[counter_reverse][0])
+        if pot_drab != "not found":
+            final_fashion.append(pot_drab)
+        counter_reverse -= 1
+    dlt_2 = [key for key in fashion_list if fashion_list[key][1] < 100]
+    for key in dlt_2:
+        del fashion_list[key]
+    sorted_fashion_2 = sorted(fashion_list.items(), key=lambda x: abs(x[1][0] - avg_sentiment), reverse=False)
+    counter_forward = 0
+    while len(final_fashion) == 2:
+        pot_con = industry_name(sorted_fashion_2[counter_forward][0])
+        if pot_con != "not found":
+            final_fashion.append(pot_con)
+        counter_forward += 1
+
 
     pythonwhy = []
     for award, presenters, nominees, winners in masterlist:
@@ -448,4 +505,5 @@ def wrapup():
 
     final_awards = list(pair[0] for pair in newbadawards.items())
 
-    return nominees_dict, winners_dict, presenters_dict, final_men, final_awards
+    return nominees_dict, winners_dict, presenters_dict, final_men, final_awards, final_fashion
+

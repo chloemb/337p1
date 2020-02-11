@@ -1,10 +1,15 @@
-Hosts: tina fey, amy poehler
+Additional goal - Red carpet:
+	Best dressed: bradley cooper
+	Worst dressed: halle berry
+	Most controversially dressed: adele
 
-Our extracted awards: best dressed , best idea ever , best thing ever , best supporting actor tonight , best tweets , best tv movie , best supporting actress for tv performance , best actress for tv movie role , best actor for tv drama , best show on tv , best pic , best score for "life , best song :d , best winner's reaction , best acceptance speeches , best song won best acceptance speech , best skin tight dress , best presenters , best picture award , best actress | , best combo , best part , best face , best motion picture screenplay , best screenplay finally , best performance in tv , best actress in tv drama rubs , best supp , best motion picture thoo , best actress in tv comedy , best speech writer , best film director for “argo” , best director award , best director for 'argo , best director” , best comedy tv show , best actor musical/comedy , best fucking speech yea , best decision anyone , best motion picture comedy , best supporting actress i , best motion picture drama , best actor in motion picture comedy 
+Hosts: amy poehler, tina fey
+
+Our extracted awards: best idea ever , best thing ever , best supporting actor tonight , best tweets , best tv movie , best supporting actress for tv performance , best actress for tv movie role , best actor for tv drama , best show on tv , best score for "life , best song :d , best winner reaction , best acceptance speeches , best song won best acceptance speech , best presenters , best picture award , best actress | , best combo , best part , best motion picture screenplay , best screenplay finally , best look ever , best performance in tv , best actress in tv drama , best supp , best motion picture thoo , best actress in tv comedy , best speech writer , best film director for “argo” , best director award , best direction , best director for 'argo , best director” , best comedy tv show , best actor musical/comedy , best fucking speech yea , best decision anyone , best motion picture comedy , best supporting actress i , best motion picture drama , best actor in motion picture comedy 
 
 cecil b. demille award: 
-	Presenters: tina fey, robert pattinson
-	Nominees: anne hathaway, adele, jennifer lawrence, lena dunham
+	Presenters: taylor swift, adele
+	Nominees: maggie smith, anne hathaway, adele, jennifer lawrence
 	Winner: jodie foster
 
 best motion picture - drama: 
@@ -73,12 +78,12 @@ best original score - motion picture:
 	Winner: life
 
 best original song - motion picture: 
-	Presenters: Not found
+	Presenters: jennifer lopez, adele
 	Nominees: madonna, god
 	Winner: smith
 
 best television series - drama: 
-	Presenters: Not found
+	Presenters: alex gansa
 	Nominees: no, girls
 	Winner: homeland
 
@@ -94,7 +99,7 @@ best performance by an actor in a television series - drama:
 
 best television series - comedy or musical: 
 	Presenters: jay leno, jimmy fallon
-	Nominees: Not found
+	Nominees: it
 	Winner: girls
 
 best performance by an actress in a television series - comedy or musical: 

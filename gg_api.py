@@ -17,7 +17,7 @@ def get_hosts(year):
     of this function or what it returns.'''
     # Your code here
     hosts = []
-    with open(answer_file_name + str(year) + '.json') as json_file:
+    with open(answer_file_name + str(year) + '.json', 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
         hosts = data["Host"]
     return hosts
@@ -27,7 +27,7 @@ def get_awards(year):
     of this function or what it returns.'''
     # Your code here
     # FIX THIS
-    with open(answer_file_name + str(year) + '.json') as json_file:
+    with open(answer_file_name + str(year) + '.json', 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
         awards = data["Awards"]
     return awards
@@ -38,7 +38,7 @@ def get_nominees(year):
     the name of this function or what it returns.'''
     # Your code here
     nominees = {}
-    with open(answer_file_name + str(year) + '.json') as json_file:
+    with open(answer_file_name + str(year) + '.json', 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
         for item in data:
             if item in OFFICIAL_AWARDS_1315:
@@ -52,7 +52,7 @@ def get_winner(year):
     Do NOT change the name of this function or what it returns.'''
     # Your code here
     winners = {}
-    with open(answer_file_name + str(year) + '.json') as json_file:
+    with open(answer_file_name + str(year) + '.json', 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
         for item in data:
             if item in OFFICIAL_AWARDS_1315:
@@ -66,7 +66,7 @@ def get_presenters(year):
     name of this function or what it returns.'''
     # Your code here
     presenters = {}
-    with open(answer_file_name + str(year) + '.json') as json_file:
+    with open(answer_file_name + str(year) + '.json', 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
         for item in data:
             if item in OFFICIAL_AWARDS_1315:
@@ -81,10 +81,11 @@ def pre_ceremony():
     Do NOT change the name of this function or what it returns.'''
     # Your code here
     nltk.download('averaged_perceptron_tagger')
+    nltk.download('punkt')
     print("Pre-ceremony processing complete.")
     return
 
-def create_ans_file(nominees, winners, presenters, hosts, awards, year, official_awards):
+def create_ans_file(nominees, winners, presenters, hosts, awards, year, official_awards, fashion):
     all_answers = {
         "Host": hosts,
         "Awards": awards
@@ -95,10 +96,15 @@ def create_ans_file(nominees, winners, presenters, hosts, awards, year, official
             "Nominees": [nominee for nominee in nominees.get(award_name)] if nominees.get(award_name) else [],
             "Winner": winners.get(award_name) if winners.get(award_name) else []
         }
-    with open(answer_file_name + year + '.json', 'w') as f:
+    with open(answer_file_name + year + '.json', 'w', encoding='utf-8') as f:
         json.dump(all_answers, f)
 
-    with open('human_readable_' + year + '.txt', 'w') as f:
+    with open('human_readable_' + year + '.txt', 'w', encoding='utf-8') as f:
+        f.write('Additional goal - Red carpet:' + '\n')
+        f.write('\t' + 'Best dressed: ' + fashion[0] + '\n')
+        f.write('\t' + 'Worst dressed: ' + fashion[1] + '\n')
+        f.write('\t' + 'Most controversially dressed: ' + fashion[2] + '\n\n')
+
         f.write('Hosts: ' + ', '.join(hosts) + '\n\n')
         f.write('Our extracted awards: ' + ', '.join(awards) + '\n\n')
         for real_award in official_awards:
@@ -125,15 +131,16 @@ def main():
     if this_year == 'c':
         years = ['2013', '2015']
         for year in years:
-            nominees, winners, presenters, hosts, awards = code.main_loop(year, OFFICIAL_AWARDS_1315)
-            create_ans_file(nominees, winners, presenters, hosts, awards, year, OFFICIAL_AWARDS_1315)
+            nominees, winners, presenters, hosts, awards, fashion = code.main_loop(year, OFFICIAL_AWARDS_1315)
+            create_ans_file(nominees, winners, presenters, hosts, awards, year, OFFICIAL_AWARDS_1315, fashion)
     elif this_year == '2013' or this_year == '2015':
-        nominees, winners, presenters, hosts, awards = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
-        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1315)
+        nominees, winners, presenters, hosts, awards, fashion = code.main_loop(this_year, OFFICIAL_AWARDS_1315)
+        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1315, fashion)
     else:
-        nominees, winners, presenters, hosts, awards = code.main_loop(this_year, OFFICIAL_AWARDS_1819)
-        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1819)
+        nominees, winners, presenters, hosts, awards, fashion = code.main_loop(this_year, OFFICIAL_AWARDS_1819)
+        create_ans_file(nominees, winners, presenters, hosts, awards, this_year, OFFICIAL_AWARDS_1819, fashion)
 
 
 if __name__ == '__main__':
     main()
+
