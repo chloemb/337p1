@@ -1,4 +1,5 @@
 import nltk
+nltk.download('punkt')
 import string as str
 import re
 import sys
@@ -41,7 +42,7 @@ masterlist = []
 
 # word bags
 win_verbs = ["won", "win", "accept", "receive", "award", "got", "get", "honor"]
-pres_verbs = ["present", "host", "announ"]
+pres_verbs = ["present", "host", "announ", "give", "gave"]
 all_verbs = win_verbs + pres_verbs
 
 # if a tweet has any of these words, it will be parsed
@@ -106,7 +107,8 @@ def full_nnp(pairs):
 
 
 def depunctuate(stringy):
-    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0]
+    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0].replace(
+        "'s", "")
 
 
 def find_next_award(pairs, best_index):
@@ -349,7 +351,8 @@ def main_loop(year, these_awards):
                     blob = TextBlob(line['text'])
                     senti = blob.sentences[0].sentiment.polarity
                     try:
-                        fashion_list[potential_item] += (senti, 1)
+                        fashion_list[potential_item] = (fashion_list[potential_item][0] + senti,
+                                                        fashion_list[potential_item][1] + 1)
                     except:
                         fashion_list[potential_item] = (senti, 1)
                     continue
@@ -434,15 +437,44 @@ def wrapup():
             final_men.append(pot_host)
             host_count += 1
         host_search_index += 1
-
+    dlt = [key for key in fashion_list if fashion_list[key][1] < 60]
+    total_sentiment = 0
+    total_mentions = 0
+    for key in dlt:
+        del fashion_list[key]
     for potentials in fashion_list:
-        if fashion_list[potentials][1] <= 1:
-            del fashion_list[potentials]
-        else:
-            fashion_list[potentials][0] = fashion_list[potentials][0]/fashion_list[potentials][1]
+        fashion_list[potentials] = (fashion_list[potentials][0]/fashion_list[potentials][1],
+                                        fashion_list[potentials][1])
+        total_sentiment += fashion_list[potentials][0]
+        total_mentions += fashion_list[potentials][1]
+    avg_sentiment = total_sentiment/total_mentions
     final_fashion = []
-    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1], reverse=True)
-    print(sorted_fashion)
+    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1][0], reverse=True)
+    counter_forward = 0
+    counter_reverse = len(sorted_fashion) - 1
+    while len(final_fashion) == 0:
+        pot_icon = industry_name(sorted_fashion[counter_forward][0])
+        if pot_icon != "not found":
+            final_fashion.append(pot_icon)
+        counter_forward += 1
+    while len(final_fashion) == 1:
+        pot_drab = industry_name(sorted_fashion[counter_reverse][0])
+        if pot_drab != "not found":
+            final_fashion.append(pot_drab)
+        counter_reverse -= 1
+    dlt_2 = [key for key in fashion_list if fashion_list[key][1] < 100]
+    for key in dlt_2:
+        del fashion_list[key]
+    sorted_fashion_2 = sorted(fashion_list.items(), key=lambda x: abs(x[1][0] - avg_sentiment), reverse=False)
+    counter_forward = 0
+    while len(final_fashion) == 2:
+        print(sorted_fashion_2[counter_forward][0])
+        pot_con = industry_name(sorted_fashion_2[counter_forward][0])
+        if pot_con != "not found":
+            final_fashion.append(pot_con)
+        counter_forward += 1
+
+    print(final_fashion)
 
 
     pythonwhy = []
@@ -485,3 +517,4 @@ def wrapup():
     final_awards = list(pair[0] for pair in newbadawards.items())
 
     return nominees_dict, winners_dict, presenters_dict, final_men, final_awards
+
