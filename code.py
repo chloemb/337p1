@@ -1,6 +1,17 @@
 import nltk
 import time
 import read_json
+nltk.download('punkt')
+import string as str
+import re
+import sys
+import time
+import unidecode
+import read_json
+from nltk.metrics import edit_distance
+import cProfile
+from textblob import TextBlob
+import vaderSentiment
 
 start_time = time.time()
 
@@ -22,12 +33,18 @@ badawardnames = {}
 basic_names = []
 basic_titles = []
 
+fashion_list = {}
+
+fashion_dict = ["dress", "gown", "strap", "tux", "suit", "skirt", "shoe", "lace",
+                "sheer", "sequin", "color", "designer", "ring", "bracelet", "wearing", "sexy", "hot",
+                "fashion", "looks"]
+
 # master list of all presenters, winners, nominees
 masterlist = []
 
 # word bags
 win_verbs = ["won", "win", "accept", "receive", "award", "got", "get", "honor"]
-pres_verbs = ["present", "host", "announ"]
+pres_verbs = ["present", "host", "announ", "give", "gave"]
 all_verbs = win_verbs + pres_verbs
 
 # if a tweet has any of these words, it will be parsed
@@ -92,7 +109,8 @@ def full_nnp(pairs):
 
 
 def depunctuate(stringy):
-    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0]
+    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0].replace(
+        "'s", "")
 
 
 def find_next_award(pairs, best_index):
@@ -283,12 +301,14 @@ def main_loop(year, these_awards):
 
         lower_text = line['text'].lower()
 
-        if not any(cont_word in lower_text for cont_word in pass_words):
+        if not any(cont_word in lower_text for cont_word in (pass_words + fashion_dict)):
             tweet_counter += 1
             continue
 
         monologue = True if "monologue" in lower_text else False
         congrats_found = True if "ongrat" in lower_text else False
+
+        fashion = True if any(cont_word in line['text'].lower() for cont_word in fashion_dict) else False
 
         cleaned = []
         for word in line['text'].split():
@@ -326,6 +346,16 @@ def main_loop(year, these_awards):
                         mentions[mon_item] += 1
                     except:
                         mentions[mon_item] = 1
+                    continue
+
+                if fashion:
+                    blob = TextBlob(line['text'])
+                    senti = blob.sentences[0].sentiment.polarity
+                    try:
+                        fashion_list[potential_item] = (fashion_list[potential_item][0] + senti,
+                                                        fashion_list[potential_item][1] + 1)
+                    except:
+                        fashion_list[potential_item] = (senti, 1)
                     continue
 
                 # find the next verb for each NNP group
@@ -408,6 +438,45 @@ def wrapup():
             final_men.append(pot_host)
             host_count += 1
         host_search_index += 1
+    dlt = [key for key in fashion_list if fashion_list[key][1] < 60]
+    total_sentiment = 0
+    total_mentions = 0
+    for key in dlt:
+        del fashion_list[key]
+    for potentials in fashion_list:
+        fashion_list[potentials] = (fashion_list[potentials][0]/fashion_list[potentials][1],
+                                        fashion_list[potentials][1])
+        total_sentiment += fashion_list[potentials][0]
+        total_mentions += fashion_list[potentials][1]
+    avg_sentiment = total_sentiment/total_mentions
+    final_fashion = []
+    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1][0], reverse=True)
+    counter_forward = 0
+    counter_reverse = len(sorted_fashion) - 1
+    while len(final_fashion) == 0:
+        pot_icon = industry_name(sorted_fashion[counter_forward][0])
+        if pot_icon != "not found":
+            final_fashion.append(pot_icon)
+        counter_forward += 1
+    while len(final_fashion) == 1:
+        pot_drab = industry_name(sorted_fashion[counter_reverse][0])
+        if pot_drab != "not found":
+            final_fashion.append(pot_drab)
+        counter_reverse -= 1
+    dlt_2 = [key for key in fashion_list if fashion_list[key][1] < 100]
+    for key in dlt_2:
+        del fashion_list[key]
+    sorted_fashion_2 = sorted(fashion_list.items(), key=lambda x: abs(x[1][0] - avg_sentiment), reverse=False)
+    counter_forward = 0
+    while len(final_fashion) == 2:
+        print(sorted_fashion_2[counter_forward][0])
+        pot_con = industry_name(sorted_fashion_2[counter_forward][0])
+        if pot_con != "not found":
+            final_fashion.append(pot_con)
+        counter_forward += 1
+
+    print(final_fashion)
+
 
     pythonwhy = []
     for award, presenters, nominees, winners in masterlist:
@@ -449,3 +518,4 @@ def wrapup():
     final_awards = list(pair[0] for pair in newbadawards.items())
 
     return nominees_dict, winners_dict, presenters_dict, final_men, final_awards
+
