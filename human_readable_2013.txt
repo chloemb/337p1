@@ -1,0 +1,134 @@
+Hosts: tina fey, amy poehler
+
+Our extracted awards: best dressed , best idea ever , best thing ever , best supporting actor tonight , best tweets , best tv movie , best supporting actress for tv performance , best actress for tv movie role , best actor for tv drama , best show on tv , best pic , best score for "life , best song :d , best winner's reaction , best acceptance speeches , best song won best acceptance speech , best skin tight dress , best presenters , best picture award , best actress | , best combo , best part , best face , best motion picture screenplay , best screenplay finally , best performance in tv , best actress in tv drama rubs , best supp , best motion picture thoo , best actress in tv comedy , best speech writer , best film director for “argo” , best director award , best director for 'argo , best director” , best comedy tv show , best actor musical/comedy , best fucking speech yea , best decision anyone , best motion picture comedy , best supporting actress i , best motion picture drama , best actor in motion picture comedy 
+
+cecil b. demille award: 
+	Presenters: tina fey, robert pattinson
+	Nominees: anne hathaway, adele, jennifer lawrence, lena dunham
+	Winner: jodie foster
+
+best motion picture - drama: 
+	Presenters: julia roberts, parker
+	Nominees: homeland, picture, lincoln, life
+	Winner: argo
+
+best performance by an actress in a motion picture - drama: 
+	Presenters: george clooney
+	Nominees: jennifer lawrence, daniel day-lewis, julianne moore, anne hathaway
+	Winner: jessica chastain
+
+best performance by an actor in a motion picture - drama: 
+	Presenters: Not found
+	Nominees: hugh jackman, kevin costner, bill clinton, damien lewis
+	Winner: daniel day-lewis
+
+best motion picture - comedy or musical: 
+	Presenters: Not found
+	Nominees: movie, les misérables, great, me
+	Winner: actor
+
+best performance by an actress in a motion picture - comedy or musical: 
+	Presenters: kristen wiig
+	Nominees: marilyn, anne
+	Winner: jennifer lawrence
+
+best performance by an actor in a motion picture - comedy or musical: 
+	Presenters: Not found
+	Nominees: don cheadle, logan, aussie
+	Winner: hugh jackman
+
+best animated feature film: 
+	Presenters: Not found
+	Nominees: Not found
+	Winner: brave
+
+best foreign language film: 
+	Presenters: arnold, sylvester
+	Nominees: Not found
+	Winner: great
+
+best performance by an actress in a supporting role in a motion picture: 
+	Presenters: Not found
+	Nominees: maggie smith, ya, christoph waltz, jennifer lawrence
+	Winner: anne hathaway
+
+best performance by an actor in a supporting role in a motion picture: 
+	Presenters: bradley cooper, kate hudson
+	Nominees: tommy lee jones, leo, ed harris
+	Winner: christoph waltz
+
+best director - motion picture: 
+	Presenters: halle berry
+	Nominees: argo, hope, jodie foster, oh
+	Winner: ben affleck
+
+best screenplay - motion picture: 
+	Presenters: robert pattinson, amanda seyfried
+	Nominees: lincoln
+	Winner: django
+
+best original score - motion picture: 
+	Presenters: canada
+	Nominees: great, sorry, h
+	Winner: life
+
+best original song - motion picture: 
+	Presenters: Not found
+	Nominees: madonna, god
+	Winner: smith
+
+best television series - drama: 
+	Presenters: Not found
+	Nominees: no, girls
+	Winner: homeland
+
+best performance by an actress in a television series - drama: 
+	Presenters: nathan fillion, lea michele
+	Nominees: julianne moore, lena dunham
+	Winner: claire danes
+
+best performance by an actor in a television series - drama: 
+	Presenters: Not found
+	Nominees: damien lewis, kevin costner, don cheadle, jon hamm
+	Winner: lewis
+
+best television series - comedy or musical: 
+	Presenters: jay leno, jimmy fallon
+	Nominees: Not found
+	Winner: girls
+
+best performance by an actress in a television series - comedy or musical: 
+	Presenters: Not found
+	Nominees: don cheadle
+	Winner: lena dunham
+
+best performance by an actor in a television series - comedy or musical: 
+	Presenters: Not found
+	Nominees: lena dunham
+	Winner: don cheadle
+
+best mini-series or motion picture made for television: 
+	Presenters: Not found
+	Nominees: game, great
+	Winner: change
+
+best performance by an actress in a mini-series or motion picture made for television: 
+	Presenters: Not found
+	Nominees: time
+	Winner: julianne moore
+
+best performance by an actor in a mini-series or motion picture made for television: 
+	Presenters: Not found
+	Nominees: Not found
+	Winner: kevin costner
+
+best performance by an actress in a supporting role in a series, mini-series or motion picture made for television: 
+	Presenters: dennis quaid, kerry washington
+	Nominees: faith
+	Winner: maggie smith
+
+best performance by an actor in a supporting role in a series, mini-series or motion picture made for television: 
+	Presenters: Not found
+	Nominees: christoph waltz
+	Winner: ed harris
+

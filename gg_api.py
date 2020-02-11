@@ -98,6 +98,18 @@ def create_ans_file(nominees, winners, presenters, hosts, awards, year, official
     with open(answer_file_name + year + '.json', 'w') as f:
         json.dump(all_answers, f)
 
+    with open('human_readable_' + year + '.txt', 'w') as f:
+        f.write('Hosts: ' + ', '.join(hosts) + '\n\n')
+        f.write('Our extracted awards: ' + ', '.join(awards) + '\n\n')
+        for real_award in official_awards:
+            f.write(real_award + ': ' + '\n')
+            f.write('\t' + 'Presenters: ' + (', '.join([presenter for presenter in presenters.get(real_award)]) + '\n'
+                    if presenters.get(real_award) else 'Not found' + '\n'))
+            f.write('\t' + 'Nominees: ' + (', '.join([nominee for nominee in nominees.get(real_award)]) + '\n'
+                    if nominees.get(real_award) else 'Not found' + '\n'))
+            f.write('\t' + 'Winner: ' + (winners.get(real_award) + '\n\n' if winners.get(real_award)
+                    else 'Not found' + '\n\n'))
+
 def main():
     '''This function calls your program. Typing "python gg_api.py"
     will run this function. Or, in the interpreter, import gg_api

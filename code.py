@@ -1,14 +1,6 @@
 import nltk
-import string as str
-import re
-import urllib.request
-import sys
 import time
-import unidecode
-from bs4 import BeautifulSoup
 import read_json
-from nltk.metrics import edit_distance
-import cProfile
 
 start_time = time.time()
 
@@ -188,8 +180,8 @@ def combine_award(name1, name2):
     if name2 in name1:
         return name1
     if len(name1) >= len(name2):
-        big = name1.lower()
-        smol = name2.lower()
+        big = name1
+        smol = name2
     else:
         big = name2
         smol = name1
@@ -238,11 +230,10 @@ def update_master(award, item, verb, negated):
                 return
 
             nom_item = can_combine_item_set(item, nominees)
+            nominees.setdefault(nom_item, 0)
             if negated:
-                nominees.setdefault(nom_item, 0)
                 nominees[nom_item] += 2
             else:
-                nominees.setdefault(nom_item, 0)
                 nominees[nom_item] += 1
 
             if any(word in verb for word in win_verbs) and not negated:
