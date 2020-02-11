@@ -63,7 +63,7 @@ def find_next_verb(pairs):
 
 
 
-cutlist = ['this', 'ever', 'tonight', 'win', 'luck', 'tits','good', 'cleavage', 'racktress', 'white', 'red', 'wonder', 'black', 'suits', 'tonight', 'i\'ll', 'i\'m', 'i\'ve', 'ive', 'well', 'updog', 'broad', 'boyfriend', 'girlfriend', 'couple', 'dressed', 'racktress','golden','globes','ggs','boy','girl','pose']
+cutlist = []
 
 def find_next_award_maria(pairs, best_index):
     counter = 0
@@ -73,7 +73,7 @@ def find_next_award_maria(pairs, best_index):
             award = ['best']
             removeything = 0
             actualfor = False
-            while counter < len(pairs)-best_index and depunctuate(pairs[counter+best_index][0]) not in cutlist and (pairs[counter+best_index][1] in ['RBS','NN','VBG', 'JJS', 'IN','JJ','RP','VB','DT',"NNP"] or pairs[counter+best_index][0].replace("-","") == ""):
+            while counter < len(pairs)-best_index and (pairs[counter+best_index][1] in ['RBS','NN','VBG', 'JJS', 'IN','JJ','RP','VB','DT',"NNP"] or pairs[counter+best_index][0].replace("-","") == ""):
                 if depunctuate(pairs[counter+best_index][0]) == '' or depunctuate(pairs[counter+best_index][0])==' ':
                     counter += 1
                     continue
@@ -282,6 +282,10 @@ def main_loop(year, these_awards):
     list_actors()
     list_movies()
 
+    global fashion_list
+
+    fashion_list = {}
+
     for award in these_awards:
         if any(people_word in award for people_word in ("perform", "direct", "cecil")):
             people_awards.append(award)
@@ -418,9 +422,12 @@ def wrapup():
         if not matched:
             newbadawards[award] = counter
     removelist = []
-    for award, counter in newbadawards.items():
-        if counter < 3:
-            removelist.append(award)
+    while len(newbadawards.items()) > 28:
+        lowest = ("", 1000)
+        for award, counter in newbadawards.items():
+            if counter < lowest[1]:
+                lowest = (award, counter)
+        newbadawards.pop(lowest[0])
     
     for award in removelist:
         newbadawards.pop(award)
