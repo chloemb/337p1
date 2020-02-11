@@ -1,17 +1,7 @@
 import nltk
 import time
 import read_json
-nltk.download('punkt')
-import string as str
-import re
-import sys
-import time
-import unidecode
-import read_json
-from nltk.metrics import edit_distance
-import cProfile
 from textblob import TextBlob
-import vaderSentiment
 
 start_time = time.time()
 
@@ -289,7 +279,7 @@ def main_loop(year, these_awards):
             print(tweet_counter)
 
         if tweet_counter == len(tweets) - 1:
-            nominees, winners, presenters, hosts, awards = wrapup()
+            nominees, winners, presenters, hosts, awards, fashion = wrapup()
             end_time = time.time()
             # print(nominees, winners, presenters)
             # print("NOMINEES:", nominees)
@@ -297,7 +287,7 @@ def main_loop(year, these_awards):
             # print("PRESENTERS:", presenters)
             # print("MENTIONS:", mentions)
             # print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
-            return nominees, winners, presenters, hosts, awards
+            return nominees, winners, presenters, hosts, awards, fashion
 
         lower_text = line['text'].lower()
 
@@ -366,9 +356,7 @@ def main_loop(year, these_awards):
                     new_counter = counter + verb_ind + 1
 
                     if any(lower_tagged[new_counter - 2][0] == negate_word
-                           for negate_word in ("didn't", "didnt", "not")) \
-                            or lower_tagged[new_counter - 3][0] == "should" and \
-                            lower_tagged[new_counter - 2][0] == "have":
+                           for negate_word in ("didn't", "didnt", "not")):
                         negated = True
                     else:
                         negated = False
@@ -517,5 +505,5 @@ def wrapup():
 
     final_awards = list(pair[0] for pair in newbadawards.items())
 
-    return nominees_dict, winners_dict, presenters_dict, final_men, final_awards
+    return nominees_dict, winners_dict, presenters_dict, final_men, final_awards, final_fashion
 
