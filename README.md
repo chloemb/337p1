@@ -3,8 +3,8 @@ CS 337 project 1 at Northwestern University
 
 Team members:\
 Chloe Brown (cmb7352)\
-Jack Warshaw\
-Maria Trejos
+Jack Warshaw (jww482)\
+Maria Trejos (jmt520)
 
 To run our project, first run: `pip3 install -r requirements.txt`\
 Next, run pre_ceremony() in gg_api.py\
