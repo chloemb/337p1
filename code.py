@@ -36,8 +36,8 @@ basic_titles = []
 fashion_list = {}
 
 fashion_dict = ["dress", "gown", "strap", "tux", "suit", "skirt", "shoe", "lace",
-                "sheer", "sequin", "color", "designer", "ring", "bracelet", "wearing", "sexy", "hot",
-                "fashion", "looks"]
+                "sheer", "sequin", "designer", "bracelet", "wearing",
+                "fashion"]
 
 # master list of all presenters, winners, nominees
 masterlist = []
@@ -349,13 +349,12 @@ def main_loop(year, these_awards):
                     continue
 
                 if fashion:
-                    blob = TextBlob(line['text'])
-                    senti = blob.sentences[0].sentiment.polarity
-                    try:
-                        fashion_list[potential_item] = (fashion_list[potential_item][0] + senti,
-                                                        fashion_list[potential_item][1] + 1)
-                    except:
-                        fashion_list[potential_item] = (senti, 1)
+                    fashion_list.setdefault(potential_item, (0, 1, []))
+                    fashion_list[potential_item][2].append(line['text'])
+                    blank = fashion_list[potential_item][2]
+                    fashion_list[potential_item] = (0,
+                                                    fashion_list[potential_item][1] + 1,
+                                                    blank)
                     continue
 
                 # find the next verb for each NNP group
@@ -444,13 +443,17 @@ def wrapup():
     for key in dlt:
         del fashion_list[key]
     for potentials in fashion_list:
+        for tweets in fashion_list[potentials][2]:
+            blob = TextBlob(tweets)
+            fashion_list[potentials] = (blob.sentences[0].sentiment.polarity+fashion_list[potentials][0],
+                                        fashion_list[potentials][1], fashion_list[potentials][2])
         fashion_list[potentials] = (fashion_list[potentials][0]/fashion_list[potentials][1],
                                         fashion_list[potentials][1])
         total_sentiment += fashion_list[potentials][0]
         total_mentions += fashion_list[potentials][1]
+    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1][0], reverse=True)
     avg_sentiment = total_sentiment/total_mentions
     final_fashion = []
-    sorted_fashion = sorted(fashion_list.items(), key=lambda x: x[1][0], reverse=True)
     counter_forward = 0
     counter_reverse = len(sorted_fashion) - 1
     while len(final_fashion) == 0:
@@ -469,13 +472,10 @@ def wrapup():
     sorted_fashion_2 = sorted(fashion_list.items(), key=lambda x: abs(x[1][0] - avg_sentiment), reverse=False)
     counter_forward = 0
     while len(final_fashion) == 2:
-        print(sorted_fashion_2[counter_forward][0])
         pot_con = industry_name(sorted_fashion_2[counter_forward][0])
         if pot_con != "not found":
             final_fashion.append(pot_con)
         counter_forward += 1
-
-    print(final_fashion)
 
 
     pythonwhy = []
