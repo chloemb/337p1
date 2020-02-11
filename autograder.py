@@ -64,7 +64,7 @@ def calc_translation(result, answer):
     between them, and returns a translation dictionary and
     score.'''
 
-    print("calcing", "RESULT", result, "ANSWER", answer)
+    # print("\t\tGIVEN:", result, ", ANSWER:", answer)
 
     resultmap = {norm_text(r): r for r in result}
     answermap = {norm_text(a): a for a in answer}
@@ -182,8 +182,13 @@ def score_structured(year, answers, info_type):
 
     for a in answers['award_data']:
         if info_type == 'winner':
+            # print("winner for", a)
             temp_spelling, translation = calc_translation([results[a]], [answers['award_data'][a][info_type]])
         else:
+        #     if info_type == "nominees":
+        #         # print("nominees for", a)
+        #     else:
+        #         # print("presenters for", a)
             temp_spelling, translation = calc_translation(results[a], answers['award_data'][a][info_type])
             c_score += calc_score([translation[res] if res in translation else res for res in results[a]], answers['award_data'][a][info_type])
         spelling_score += temp_spelling

@@ -3,5 +3,6 @@
 *.DS_Store
 *.id
 *.idea
-gg2013.json
-gg2015.json
+*.json
+!new_name_updated.tsv
+!new_title_updated.tsv

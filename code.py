@@ -1,48 +1,93 @@
 import nltk
-import string as str
-import re
-import urllib.request
-import sys
 import time
-import unidecode
-from bs4 import BeautifulSoup
 import read_json
-from nltk.metrics import edit_distance
-
-OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
-OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
-
-
-# WE MAY NEED TO UNCOMMENT THIS?
-# nltk.download('averaged_perceptron_tagger')
 
 start_time = time.time()
-# print("\n\n\nNEW RUN")
 
-searched_pairs = []
+# people awards are awards that are won by people (instead of media)
+people_awards = []
+real_awards = []
+
+# keeping track of things that have been searched
+searched_people = []
+searched_media = []
+not_person = []
+not_movie = []
+
+# keeping track for hosts and awards
+mentions = {}
+badawardnames = {}
+
+# lists of names and titles from IMDB to search for
+basic_names = []
+basic_titles = []
+
+# master list of all presenters, winners, nominees
+masterlist = []
+
+# word bags
+win_verbs = ["won", "win", "accept", "receive", "award", "got", "get", "honor"]
+pres_verbs = ["present", "host", "announ"]
+all_verbs = win_verbs + pres_verbs
+
+# if a tweet has any of these words, it will be parsed
+pass_words = ["best", "cecil", "monologue", "ongrat"]
+
+
+def list_actors():
+    with open("new_name_updated.tsv", 'r', encoding='utf-8') as basics:
+        for line in basics:
+                basic_names.append(line.lower().split('\n')[0])
+
+
+def list_movies():
+    with open("new_title_updated.tsv", 'r', encoding='utf-8') as basics:
+        for line in basics:
+                basic_titles.append(line.lower().split('\n')[0])
 
 
 def find_next_verb(pairs):
-    # print("finding next verb from", pairs)
     counter = 0
     while counter < len(pairs):
         if pairs[counter][1].startswith('VB'):
-            # print(0)
-            # print("found a verb", pairs[counter][0])
             return pairs[counter][0], counter
         counter += 1
     return "", counter
 
 
+def find_next_award_maria(pairs, best_index):
+    counter = 0
+    award = []
+    while counter < len(pairs)-best_index:
+        if pairs[counter+best_index-1][0] == 'best':
+            award = ['best']
+            removeything = 0
+            while counter < len(pairs)-best_index and pairs[counter+best_index][1] in ['RBS', 'NN', 'VBG', 'JJS', 'IN']:
+                if depunctuate(pairs[counter+best_index][0]) == '' or depunctuate(pairs[counter+best_index][0])==' ':
+                    counter += 1
+                    continue
+                award.append(depunctuate(pairs[counter+best_index][0]))
+
+                if pairs[counter+best_index][1] in ['IN','RBS','VBG','JJS']:
+                    removeything += 1
+                else:
+                    removeything=0
+                counter += 1
+            award = award[:len(award)-removeything]
+            return award
+        counter += 1
+    return award
+
+
 def full_nnp(pairs):
     counter = 0
     # print("here?", len(pairs),pairs[counter][1])
-    name = ""
+    name = []
     while counter < len(pairs) and pairs[counter][1] == 'NNP':
-        name += " " + depunctuate(pairs[counter][0])
+        name.append(depunctuate(pairs[counter][0]))
         # print(name)
         counter += 1
-    # print(name)
+    name = ' '.join(name)
     return name, counter
 
 
@@ -50,31 +95,41 @@ def depunctuate(stringy):
     return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0]
 
 
-def find_next_award(pairs):
+def find_next_award(pairs, best_index):
     counter = 0
-    award = ""
-    #print(counter, pairs)
-    while counter < len(pairs):
-        if pairs[counter][0] == 'best' or pairs[counter][0] == 'Best':
-            #print("runs")
-            award="Best"
-            counter+=1
-            #print("yo",counter, len(pairs), pairs[counter][1])
-            while counter < len(pairs) and pairs[counter][1].startswith('N'):
-                #print("follows:")
-                award += " " + pairs[counter][0]
-                #print(award)
+    award = []
+    while counter < len(pairs)-best_index:
+        if pairs[counter+best_index-1][0] == 'cecil':
+            return ['cecil']
+        if pairs[counter+best_index-1][0] == 'best':
+            award = ['best']
+            while counter < len(pairs)-best_index and pairs[counter+best_index][1].startswith(('N', 'VB', 'JJ')):
+                award.append(depunctuate(pairs[counter+best_index][0]))
                 counter += 1
-            return depunctuate(award)
+            return award
         counter += 1
-    return depunctuate(award)
+    return award
 
 
-def find_next_award_hardcoded(pairs):
+def find_next_award_hardcoded(pairs, best_index):
     # find closest official award name
-    raw_award = find_next_award(pairs)
+    tweet = [pair[0] for pair in pairs]
+    raw_award = find_next_award(pairs, best_index)
     found = False
-    for real_award in OFFICIAL_AWARDS_1315:
+
+    keywords = ("drama", "musical", "comedy", "picture", "series", "tv", "television", "motion", "movie")
+    contained_keywords = []
+    for keyword in keywords:
+        if keyword in tweet:
+            contained_keywords.append(keyword)
+    if contained_keywords:
+        for keyword in contained_keywords:
+            if keyword not in raw_award:
+                raw_award.append(keyword)
+
+    raw_award = ' '.join(raw_award)
+
+    for real_award in real_awards:
         potential_award = combine_award(raw_award, real_award)
         if potential_award:
             raw_award = potential_award
@@ -85,58 +140,44 @@ def find_next_award_hardcoded(pairs):
     return raw_award
 
 
-def actor_name(name):
-    # found urllib.request and BeautifulSoup packages from the repo cited below
-    # citation: https://github.com/rkm660/GoldenGlobes/blob/master/gg.py
-
-    # take the url for a search by a particular name
-
-    # remove punctuation, accents, replace spaces with +
-    name = re.sub(r'[^\w\s]', '', name)
-    name = unidecode.unidecode(name)
-    # Add movies later
-    for trial, match in searched_pairs:
-        if trial == name:
-            return match
-    url = "https://www.imdb.com/find?s=nm&q="+name.replace(" ", "+")+"&ref_=nv_sr_sm"
-
-    # search
-    red = urllib.request.urlopen(url).read()
-    soup = BeautifulSoup(red, features="lxml")
-    existence = soup.find_all("tr", {"class": "findResult odd"})
-    actor = ""
-    if len(existence) > 1:
-        actor = existence[0].find_all("a")[1].string
-
-    # else:
-    #     print("Not an Actor")
-    # print(actor)
-    searched_pairs.append((name,actor))
-    return actor
-
-
 def industry_name(name):
     # searches through the imdb database of actors names, name.basics.tsv which is found at https://datasets.imdbws.com/
-    name = name.lower()
-    with open("name.basics.tsv") as basics:
-        for line in basics:
-            if name in line.lower():
-                return name
-        return "Not A Relevant Person"
+
+    if name in not_person:
+        return "not found"
+    if name in searched_people:
+        return name
+    if name in basic_names:
+        searched_people.append(name)
+        return name
+
+    not_person.append(name)
+    return "not found"
 
 
 def media_name(title):
     # searches through the imdb database of film names, title.akas.tsv which is found at https://datasets.imdbws.com
-    title = title.lower()
-    with open("title.akas.tsv") as basics:
-        for line in basics:
-            if title in line.lower():
-                return title
-        return "Not A Movie"
+
+    if title in not_movie:
+        return "not found"
+    if title in searched_media:
+        return title
+    if title in basic_titles:
+        searched_media.append(title)
+        return title
+
+    not_movie.append(title)
+    return "not found"
 
 
 def combine_award(name1, name2):
+    name1 = name1.lower()
+    name2 = name2.lower()
     if name1 == name2:
+        return name1
+    if name1 in name2:
+        return name2
+    if name2 in name1:
         return name1
     if len(name1) >= len(name2):
         big = name1
@@ -152,10 +193,10 @@ def combine_award(name1, name2):
     for smolword in smolwords:
         matched = False
         for bigword in bigwords:
-            if bigword in prominent_synonyms[0] and smolword in prominent_synonyms[0] or bigword in prominent_synonyms[1] and smolword in prominent_synonyms[1]:
+            if any(bigword in syn_list and smolword in syn_list for syn_list in prominent_synonyms):
                 matched = True
                 break
-            if edit_distance(smolword, bigword, transpositions=True) < 3:
+            if smolword == bigword:
                 matched = True
                 break
         if not matched:
@@ -163,195 +204,248 @@ def combine_award(name1, name2):
     return big
 
 
-masterlist = []
+def can_combine_item_set(item, answers):
+    for set_item in answers:
+        can_combine = combine_award(item, set_item)
+        if can_combine:
+            return can_combine
+    return item
 
 
-def update_master(award, person, verb):
-    # print("updating",award,person,verb)
+def update_master(award, item, verb, negated):
 
-    for listaward, presenters, actors, winners in masterlist:
-        if award == listaward:
-            if any(word in verb for word in ("present", "host", "announ")):
-                presenters.add(person)
-                return
-            if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
-                winners.append(person)
-                return
-            actors.add(person)
-            return
-    if any(word in verb for word in ("present", "host", "announ")):
-        newset = set()
-        newset.add(person)
-        masterlist.append((award,newset,set(),[]))
-    if any(word in verb for word in ("won", "win", "accept", "receive", "award")):
-        masterlist.append((award, set(), set(),[]))
+    if any(word in verb for word in pres_verbs) or award in people_awards:
+        item = industry_name(item)
     else:
-        actorset = set()
-        actorset.add(person)
-        masterlist.append((award, set(), actorset, []))
+        item = media_name(item)
+    if item == "not found":
+        return
+
+    for listaward, presenters, nominees, winners in masterlist:
+        if award == listaward:
+            if any(word in verb for word in pres_verbs):
+                item = can_combine_item_set(item, presenters)
+                presenters.setdefault(item, 0)
+                presenters[item] += 1
+                return
+
+            nom_item = can_combine_item_set(item, nominees)
+            nominees.setdefault(nom_item, 0)
+            if negated:
+                nominees[nom_item] += 2
+            else:
+                nominees[nom_item] += 1
+
+            if any(word in verb for word in win_verbs) and not negated:
+                item = can_combine_item_set(item, winners)
+                winners.setdefault(item, 0)
+                winners[item] += 1
+            return
+
+    newdict = dict({item: 1})
+    if any(word in verb for word in pres_verbs):
+        masterlist.append((award, newdict, dict(), dict()))
+        return
+    if any(word in verb for word in win_verbs):
+        masterlist.append((award, dict(), newdict, newdict))
+    else:
+        masterlist.append((award, dict(), newdict, dict()))
 
 
-def main_loop(year):
-    print("start")
+def main_loop(year, these_awards):
     tweets = read_json.read_json(year)
-    ignore_as_first_char = ('@', '#')
+    ignore_as_first_char = ('RT', '@', '#')
+    # remove_as_first_char = ('@', '#')
     tweet_counter = 0
 
+    list_actors()
+    list_movies()
+
+    for award in these_awards:
+        if any(people_word in award for people_word in ("perform", "direct", "cecil")):
+            people_awards.append(award)
+        real_awards.append(award)
+
     for line in tweets:
-        # print(line)
-        if tweet_counter == 50000:
-            # print("ending")
-            nominees, winners, presenters = wrapup()
+        if tweet_counter % 10000 == 0:
+            print(tweet_counter)
+
+        if tweet_counter == len(tweets) - 1:
+            nominees, winners, presenters, hosts, awards = wrapup()
             end_time = time.time()
             # print(nominees, winners, presenters)
-            print("Runtime:", end_time - start_time, "seconds")
-            return nominees, winners, presenters
+            # print("NOMINEES:", nominees)
+            # print("WINNERS:", winners)
+            # print("PRESENTERS:", presenters)
+            # print("MENTIONS:", mentions)
+            # print("RUNTIME:", end_time - start_time, "seconds. (", (end_time - start_time) / 60, "minutes.)")
+            return nominees, winners, presenters, hosts, awards
 
-        if "best" not in line['text'].lower():
+        lower_text = line['text'].lower()
+
+        if not any(cont_word in lower_text for cont_word in pass_words):
             tweet_counter += 1
             continue
 
-        clean_parsed = []
-        parsed = nltk.tag.pos_tag(line['text'].split())
-        
-        for pair in parsed:
-            if not pair[0].startswith(ignore_as_first_char):
-                clean_parsed.append(pair)
+        monologue = True if "monologue" in lower_text else False
+        congrats_found = True if "ongrat" in lower_text else False
+
+        cleaned = []
+        for word in line['text'].split():
+            if not word.startswith(ignore_as_first_char):
+                # if word.startswith(remove_as_first_char) and len(word) > 1:
+                #     word = word[1:]
+                # print(word)
+                cleaned.append(word)
+
+        tagged = nltk.tag.pos_tag(cleaned)
+
+        lower_tagged = [(item[0].lower(), item[1]) for item in tagged]
+        # print(clean_parsed)
+
+
+        # for i in lower_tagged:
+        #     if "ongrat" in i[0]:
+        #         congrats_found = True
+
+        # print(lower_tagged)
 
         # now, match proper nouns to verbs
-        length = len(clean_parsed)
+        length = len(lower_tagged)
         counter = 0
         while counter < length:
             # find every group of words labeled NNP
 
-            if clean_parsed[counter][1] == 'NNP':
-                potential_actor, noun_len = full_nnp(clean_parsed[counter: length])
+            if lower_tagged[counter][1] == 'NNP' and "ongrat" not in lower_tagged[counter][0]:
+                potential_item, noun_len = full_nnp(lower_tagged[counter: length])
                 counter += noun_len
 
+                if monologue:
+                    mon_item = can_combine_item_set(potential_item, mentions)
+                    try:
+                        mentions[mon_item] += 1
+                    except:
+                        mentions[mon_item] = 1
+                    continue
+
                 # find the next verb for each NNP group
-                next_verb, verb_ind = find_next_verb(clean_parsed[counter: length])
+                next_verb, verb_ind = find_next_verb(lower_tagged[counter: length])
                 if next_verb != "":
-                    next_verb = next_verb.lower()
-                    if not any(word in next_verb for word in ("present", "win", "announ", "won", "host", "accept")):
+                    if not any(word in next_verb for word in all_verbs):
                         counter += 1
                         break
-                    new_counter = counter + verb_ind
+                    new_counter = counter + verb_ind + 1
+
+                    if any(lower_tagged[new_counter - 2][0] == negate_word
+                           for negate_word in ("didn't", "didnt", "not")) \
+                            or lower_tagged[new_counter - 3][0] == "should" and \
+                            lower_tagged[new_counter - 2][0] == "have":
+                        negated = True
+                    else:
+                        negated = False
 
                     # find the next group of nouns starting with 'best'
-                    award = find_next_award_hardcoded(clean_parsed[new_counter: length])
+                    badaward = find_next_award_maria(lower_tagged, new_counter)
+                    newbadaward = ""
+
+                    # add award
+                    for word in badaward:
+                        newbadaward = newbadaward+word+" "
+                    try:
+                        badawardnames[newbadaward] += 1
+                    except:
+                        badawardnames[newbadaward] = 1
+
+                    # find the associated award name
+                    award = find_next_award_hardcoded(lower_tagged, new_counter)
                     if award:
-                        # check if it's a real actor's name
-                        try:
-                            this_actor = actor_name(potential_actor)
-                        except:
-                            break
-                        if this_actor != "":
-                            # print("updating master")
-                            update_master(award, this_actor, next_verb)
+                        update_master(award, potential_item, next_verb, negated)
+                        if congrats_found:
+                            update_master(award, potential_item, next_verb, True)
             else:
                 counter += 1
 
         tweet_counter += 1
 
-    # wrapup()
-    # end_time = time.time()
-    # print("Runtime:", end_time - start_time, "seconds")
-
 
 def wrapup():
-    print("wrapping up", time.time()-start_time)
-    # print("MASTER LIST IS", masterlist)
-    cutoff_symbols =[",",".","!","?","http","www"]
+    # print("wrapping up", time.time() - start_time)
+
+    newbadawards = dict()
+    for award, counter in badawardnames.items():
+        matched = False
+        for otheraward, othercounter in newbadawards.items():
+            if newbadawards.get(combine_award(award, otheraward)):
+                matched = True
+                othercounter += counter
+                break
+            else:
+                if combine_award(award, otheraward) == award:
+                    matched = True
+                    newbadawards.pop(otheraward)
+                    newbadawards[award] = counter + othercounter
+                    break
+        if not matched:
+            newbadawards[award] = counter
+    removelist = []
+    for award, counter in newbadawards.items():
+        if counter == 1:
+            removelist.append(award)
+    for award in removelist:
+        newbadawards.pop(award)
 
     nominees_dict = {}
     winners_dict = {}
     presenters_dict = {}
 
+    sorted_men = sorted(mentions.items(), key=lambda x: x[1], reverse=True)
+    final_men = []
+    host_count = 0
+    host_search_index = 0
+    while host_count < 2:
+        pot_host = industry_name(sorted_men[host_search_index][0])
+        if pot_host != "not found":
+            final_men.append(pot_host)
+            host_count += 1
+        host_search_index += 1
 
-
+    pythonwhy = []
     for award, presenters, nominees, winners in masterlist:
-        for symbol in cutoff_symbols:
-            if symbol in award:
-                award = award.split(symbol)[0]
-            for presenter in presenters:
-                if symbol in award:
-                    presenter = presenter.split(symbol)[0]
-            for nominee in nominees:
-                if symbol in nominee:
-                    nominee = nominee.split(symbol)[0]
-            combined_winners=[]
-            searched_winners = []
-            for winner in winners:
-                newname = winner
-                if symbol in winner:
-                    newname = winner.split(symbol)[0]
+        final_winner = []
+        final_noms = []
+        final_pres = []
 
-        searched_winners=[]
-        combined_winners=[]
-        for winner in winners:
-            if winner in searched_winners:
-                continue
-            searched_winners.append(winner)
-            count = 0
-            for swinner in winners:
-                if swinner == winner:
-                    count +=1
-            combined_winners.append(winner,count)
-        winners = combined_winners
-                  
+        if winners.items():
+            most = (0, 0)
+            for winner, count in winners.items():
+                if most == (0, 0):
+                    most = (winner, count)
+                if count > most[1]:
+                    most = (winner, count)
+                nominees[winner] = count
+            final_winner = most[0]
+        if nominees.items():
+            if nominees.get(final_winner):
+                del nominees[final_winner]
+            if len(nominees) >= 4:
+                sorted_noms = sorted(nominees.items(), key=lambda x: x[1], reverse=True)
+                final_noms = list(pair[0] for pair in sorted_noms)[:4]
+            else:
+                final_noms = list(nominees.keys())
+        if presenters.items():
+            if len(presenters) >= 2:
+                sorted_pres = sorted(presenters.items(), key=lambda x: x[1], reverse=True)
+                final_pres = list(pair[0] for pair in sorted_pres)[:2]
+            else:
+                final_pres = list(presenters.keys())
 
-    awardlist=[]
-    for award, presenters, nominees, winners in masterlist:
-        append = True
-        for premio, huespedes, nominados, ganadores in awardlist:
-            if award.lower() in premio.lower():
-                append = False
-                huespedes = huespedes.union(presenters)
-                nominados = nominados.union(nominees)
-                for winner, count in winners:
-                    ad = True
-                    for ganador, conteo in ganadores:
-                        if ganador in winner or winner in ganador:
-                            ad = False
-                            conteo += count
-                    if ad:
-                        ganadores.append((winner,count))
-                break
-            elif premio.lower() in award.lower():
-                append = False
-                premio = award
-                huespedes = huespedes.union(presenters)
-                nominados = nominados.union(nominees)
-                for winner, count in winners:
-                    ad = True
-                    for ganador, conteo in ganadores:
-                        if ganador in winner or winner in ganador:
-                            ad = False
-                            conteo += count
-                    if ad:
-                        ganadores.append((winner,count))
-                break
-        if append:
-            # print("appending", award, presenters, nominees, winners)
-            awardlist.append((award, presenters, nominees, winners))
+        pythonwhy.append((award, final_pres, final_noms, final_winner))
 
-    for award, presenters, nominees, winners in awardlist:
-        if winners == []:
-            winners = "unknown"
-            continue
-        most = (winners[0])
-        for winner, count in winners:
-            if count > most[1]:
-                most =(winner,count)
-            nominees. add(winner)
-        winners = most[0]
-
-    for award, presenters, nominees, winner in awardlist:
+    for award, presenters, nominees, winner in pythonwhy:
         nominees_dict[award] = nominees
         winners_dict[award] = winner
         presenters_dict[award] = presenters
-        # print("Award:", award, "Presented by:", presenters, "Nominated:", nominees, "winner:", winner)
 
-    return nominees_dict, winners_dict, presenters_dict
+    final_awards = list(pair[0] for pair in newbadawards.items())
 
-#main_loop(2013)
+    return nominees_dict, winners_dict, presenters_dict, final_men, final_awards
