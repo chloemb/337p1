@@ -62,6 +62,9 @@ def find_next_verb(pairs):
     return "", counter
 
 
+
+cutlist = ['this', 'ever', 'tonight', 'win', 'luck', 'tits','good', 'cleavage', 'racktress', 'white', 'red', 'wonder', 'black', 'suits', 'tonight', 'i\'ll', 'i\'m', 'i\'ve', 'ive', 'well', 'updog', 'broad', 'boyfriend', 'girlfriend', 'couple', 'dressed', 'racktress','golden','globes','ggs','boy','girl','pose']
+
 def find_next_award_maria(pairs, best_index):
     counter = 0
     award = []
@@ -69,17 +72,28 @@ def find_next_award_maria(pairs, best_index):
         if pairs[counter+best_index-1][0] == 'best':
             award = ['best']
             removeything = 0
-            while counter < len(pairs)-best_index and pairs[counter+best_index][1] in ['RBS', 'NN', 'VBG', 'JJS', 'IN']:
+            actualfor = False
+            while counter < len(pairs)-best_index and depunctuate(pairs[counter+best_index][0]) not in cutlist and (pairs[counter+best_index][1] in ['RBS','NN','VBG', 'JJS', 'IN','JJ','RP','VB','DT',"NNP"] or pairs[counter+best_index][0].replace("-","") == ""):
                 if depunctuate(pairs[counter+best_index][0]) == '' or depunctuate(pairs[counter+best_index][0])==' ':
                     counter += 1
                     continue
                 award.append(depunctuate(pairs[counter+best_index][0]))
-
+                if pairs[counter+best_index][1] == 'IN':
+                    actualfor = True
                 if pairs[counter+best_index][1] in ['IN','RBS','VBG','JJS']:
                     removeything += 1
                 else:
-                    removeything=0
+                    if not actualfor:
+                        removeything=0
+                    else:
+                        if pairs[counter+best_index][1]=='NN':
+                            removeything =0
+                            actualfor=False
+                        else:
+                            removeything+=1
                 counter += 1
+            
+
             award = award[:len(award)-removeything]
             return award
         counter += 1
@@ -99,8 +113,7 @@ def full_nnp(pairs):
 
 
 def depunctuate(stringy):
-    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0].replace(
-        "'s", "")
+    return stringy.partition(".")[0].partition(',')[0].partition("!")[0].partition("?")[0].partition("http")[0].partition(":")[0].partition("^")[0].partition("|")[0].replace("\'s","")
 
 
 def find_next_award(pairs, best_index):
@@ -406,8 +419,9 @@ def wrapup():
             newbadawards[award] = counter
     removelist = []
     for award, counter in newbadawards.items():
-        if counter == 1:
+        if counter < 3:
             removelist.append(award)
+    
     for award in removelist:
         newbadawards.pop(award)
 
