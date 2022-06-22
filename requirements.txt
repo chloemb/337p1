@@ -2,6 +2,6 @@ vaderSentiment
 textblob
 bs4
 lxml
-numpy==1.18.1
+numpy==1.22.0
 nltk==3.4.5
 unidecode
